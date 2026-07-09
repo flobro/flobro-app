@@ -1,0 +1,19 @@
+#!/bin/sh
+# Lint staged work before it lands.
+
+# Biome (JS/JSON/CSS) via the pinned local install
+if [ -x node_modules/.bin/biome ]; then
+  node_modules/.bin/biome check --staged --no-errors-on-unmatched || {
+    echo "Biome found issues. Run: npm run lint:fix"; exit 1;
+  }
+else
+  echo "note: biome not installed (run npm install); skipping lint"
+fi
+
+# Rust formatting (src-tauri)
+if command -v cargo >/dev/null 2>&1 && [ -d src-tauri ]; then
+  (cd src-tauri && cargo fmt --check) || {
+    echo "cargo fmt found issues. Run: cd src-tauri && cargo fmt"; exit 1;
+  }
+fi
+exit 0

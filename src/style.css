@@ -1,0 +1,364 @@
+:root {
+  --blue: #248bd2;
+  --blue-deep: #1668a8;
+  --blue-light: #3fa9f5;
+  --ink: #16222c;
+  --ink-soft: #4d6274;
+  --bg: #f4f8fb;
+  --card: #ffffff;
+  --line: #dde8f0;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  font:
+    14px / 1.45 -apple-system,
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.window {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(22, 34, 44, 0.28);
+}
+
+/* ---------- titlebar ---------- */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  flex: 0 0 auto;
+}
+.titlebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+.titlebar .brand svg {
+  width: 18px;
+  height: 18px;
+}
+.titlebar .spacer {
+  flex: 1;
+  height: 100%;
+}
+.titlebar button {
+  all: unset;
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.titlebar button:hover {
+  background: var(--line);
+}
+.titlebar button.close:hover {
+  background: #d64545;
+  color: #fff;
+}
+
+/* ---------- content ---------- */
+.content {
+  flex: 1;
+  padding: 8px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.hero {
+  text-align: center;
+  padding: 8px 0 2px;
+}
+.hero svg {
+  width: 64px;
+  height: 64px;
+}
+.hero h1 {
+  margin: 8px 0 2px;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.hero p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+
+.urlbar {
+  display: flex;
+  gap: 8px;
+}
+.urlbar input {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-size: 13.5px;
+  outline: none;
+  background: var(--card);
+  color: var(--ink);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.urlbar input:focus {
+  border-color: var(--blue);
+}
+
+.btn {
+  all: unset;
+  cursor: pointer;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue-light), var(--blue-deep));
+  color: #fff;
+  font-weight: 600;
+  font-size: 13.5px;
+  text-align: center;
+}
+.btn:hover {
+  filter: brightness(1.08);
+}
+.btn:active {
+  filter: brightness(0.95);
+}
+.btn.block {
+  display: block;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  margin: 4px 0 -6px;
+}
+
+.recent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.recent button {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recent button:hover {
+  border-color: var(--blue);
+}
+.recent img {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.recent .empty {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* ---------- settings form ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.field input[type="text"] {
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+  background: var(--card);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.field input[type="text"]:focus {
+  border-color: var(--blue);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.toggle .txt {
+  font-size: 12.5px;
+}
+.toggle .txt small {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+.toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue);
+}
+
+.footer {
+  flex: 0 0 auto;
+  padding: 10px 22px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+}
+.footer a,
+.footer .linklike {
+  color: var(--blue);
+  text-decoration: none;
+  cursor: pointer;
+}
+.footer a:hover,
+.footer .linklike:hover {
+  text-decoration: underline;
+}
+.linklike {
+  all: unset;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.status {
+  font-size: 11.5px;
+  color: var(--blue-deep);
+  min-height: 14px;
+}
+
+/* ---------- usage toggle feedback ---------- */
+.toggle {
+  position: relative;
+}
+.toggle-fx {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.fx-confetti {
+  position: absolute;
+  width: 7px;
+  height: 5px;
+  border-radius: 2px;
+  animation: fx-pop 0.8s cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
+}
+@keyframes fx-pop {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) rotate(200deg);
+    opacity: 0;
+  }
+}
+.fx-sad {
+  position: absolute;
+  left: -8px;
+  top: -10px;
+  font-size: 15px;
+  color: var(--ink-soft);
+  animation: fx-sad 1.5s ease-out forwards;
+}
+@keyframes fx-sad {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-26px) rotate(-12deg);
+    opacity: 0;
+  }
+}
+
+/* ---------- sponsor buttons ---------- */
+.sponsors {
+  display: flex;
+  gap: 8px;
+}
+.sponsor-btn {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+}
+.sponsor-btn:hover {
+  border-color: var(--blue);
+}
+.sponsor-btn svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
