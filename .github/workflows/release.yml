@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+          - platform: windows-latest
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS code signing + notarization (only used on the macos runner).
+          # Set these repository secrets; see SETUP-GUIDE.md for how to create them:
+          #   APPLE_CERTIFICATE            base64 of the Developer ID Application .p12
+          #   APPLE_CERTIFICATE_PASSWORD   password of that .p12
+          #   APPLE_SIGNING_IDENTITY       e.g. "Developer ID Application: Your Name (TEAMID)"
+          #   APPLE_ID                     your Apple ID email
+          #   APPLE_PASSWORD               app-specific password from appleid.apple.com
+          #   APPLE_TEAM_ID                your 10-character team id
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Flobro ${{ github.ref_name }}"
+          releaseBody: "Floating browser window for Mac and Windows. See CHANGELOG for details."
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

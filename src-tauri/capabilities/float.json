@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "float",
+  "description": "Minimal IPC surface for floating browser windows loading remote pages. Only the injected Flobro toolbar uses this: window dragging plus the app's own float_* commands.",
+  "remote": {
+    "urls": ["https://**", "http://**"]
+  },
+  "windows": ["float-*"],
+  "permissions": ["core:window:allow-start-dragging"]
+}

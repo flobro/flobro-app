@@ -1,0 +1,29 @@
+#!/bin/sh
+# Enforce Conventional Commits (https://www.conventionalcommits.org)
+# Uses commitizen when available, falls back to a regex check.
+
+MSG_FILE="$1"
+
+# merge/revert/fixup commits pass through
+head -n1 "$MSG_FILE" | grep -qE '^(Merge|Revert|fixup!|squash!)' && exit 0
+
+if command -v cz >/dev/null 2>&1; then
+  cz check --commit-msg-file "$MSG_FILE" && exit 0
+  echo ""
+  echo "Commit message does not follow Conventional Commits."
+  echo "Tip: run 'cz commit' for a guided prompt."
+  exit 1
+fi
+
+PATTERN='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9./-]+\))?(!)?: .{1,}'
+if head -n1 "$MSG_FILE" | grep -qE "$PATTERN"; then
+  exit 0
+fi
+
+echo ""
+echo "Commit message does not follow Conventional Commits:"
+echo "  <type>(<optional scope>): <description>"
+echo "  e.g. feat(toolbar): add 21:9 snap"
+echo "Types: build chore ci docs feat fix perf refactor revert style test"
+echo "Tip: pip install commitizen, then use 'cz commit' for a guided prompt."
+exit 1

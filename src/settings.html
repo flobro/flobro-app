@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Flobro settings</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar" data-tauri-drag-region>
+      <span class="brand">
+        <svg viewBox="0 0 512 512"><rect x="88" y="188" width="272" height="212" rx="44" fill="none" stroke="#248BD2" stroke-opacity="0.35" stroke-width="28"/><rect x="168" y="104" width="272" height="212" rx="44" fill="#248BD2"/></svg>
+        <span data-i18n="settings_title">Settings</span>
+      </span>
+      <span class="spacer" data-tauri-drag-region></span>
+      <button type="button" id="close" class="close" data-i18n-title="close">&#10005;</button>
+    </div>
+
+    <div class="content">
+      <div class="field">
+        <label for="default-url" data-i18n="default_page">Default page</label>
+        <input type="text" id="default-url" placeholder="https://www.youtube.com" spellcheck="false">
+      </div>
+
+      <label class="toggle">
+        <span class="txt"><span data-i18n="open_on_start">Open default page on launch</span>
+          <small data-i18n="open_on_start_sub">Skip the launcher and float your default page right away.</small>
+        </span>
+        <input type="checkbox" id="open-on-start">
+      </label>
+
+      <label class="toggle">
+        <span class="txt"><span data-i18n="stay_on_top">Stay on top by default</span>
+          <small data-i18n="stay_on_top_sub">New windows float above everything. Toggle per window with the pin.</small>
+        </span>
+        <input type="checkbox" id="stay-on-top">
+      </label>
+
+      <label class="toggle">
+        <span class="txt"><span data-i18n="remember_recent">Remember recent pages</span>
+          <small data-i18n="remember_recent_sub">Keeps your last 8 floated pages in the launcher.</small>
+        </span>
+        <input type="checkbox" id="remember-recent">
+      </label>
+
+      <label class="toggle" id="usage-toggle">
+        <span class="txt"><span data-i18n="share_usage">Share anonymous usage stats</span>
+          <small data-i18n="share_usage_sub">Only the hostname of floated pages (like youtube.com). Never full URLs, never your IP.</small>
+        </span>
+        <span class="toggle-fx" id="usage-fx" aria-hidden="true"></span>
+        <input type="checkbox" id="share-usage">
+      </label>
+
+      <button type="button" class="btn block" id="save" data-i18n="save">Save</button>
+      <div class="status" id="status"></div>
+
+      <div class="section-label" data-i18n="support">Support Flobro</div>
+      <div class="sponsors">
+        <button type="button" class="sponsor-btn" id="sponsor-gh">
+          <svg viewBox="0 0 16 16" fill="#db61a2"><path d="M8 14.25l-.345-.666C4.451 11.033 1.75 8.632 1.75 5.94 1.75 3.9 3.3 2.5 5.05 2.5c1.2 0 2.29.62 2.95 1.6.66-.98 1.75-1.6 2.95-1.6 1.75 0 3.3 1.4 3.3 3.44 0 2.692-2.7 5.093-5.905 7.644L8 14.25z"/></svg>
+          GitHub Sponsors
+        </button>
+        <button type="button" class="sponsor-btn" id="sponsor-mollie">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#248bd2" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" fill="#248bd2" fill-opacity=".12"/><path d="M15.5 8.5A4.5 4.5 0 1 0 15.5 15.5M7.5 10.8h6M7.5 13.2h5"/></svg>
+          <span data-i18n="donate_once">Donate once</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button type="button" class="linklike" id="clear-recent" data-i18n="clear_recent">Clear recent</button>
+      <button type="button" class="linklike" id="website">flobro.app</button>
+    </div>
+  </div>
+  <script src="i18n.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Flobro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="window">
+    <div class="titlebar" data-tauri-drag-region>
+      <span class="brand">
+        <svg viewBox="0 0 512 512"><rect x="88" y="188" width="272" height="212" rx="44" fill="none" stroke="#248BD2" stroke-opacity="0.35" stroke-width="28"/><rect x="168" y="104" width="272" height="212" rx="44" fill="#248BD2"/></svg>
+        Flobro
+      </span>
+      <span class="spacer" data-tauri-drag-region></span>
+      <button type="button" id="min" data-i18n-title="minimize">&#8211;</button>
+      <button type="button" id="close" class="close" data-i18n-title="close">&#10005;</button>
+    </div>
+
+    <div class="content">
+      <div class="hero">
+        <svg viewBox="0 0 512 512">
+          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3FA9F5"/><stop offset="1" stop-color="#1B7BC4"/>
+          </linearGradient></defs>
+          <rect x="88" y="188" width="272" height="212" rx="44" fill="none" stroke="#248BD2" stroke-opacity="0.35" stroke-width="28"/>
+          <rect x="168" y="104" width="272" height="212" rx="44" fill="url(#g)"/>
+        </svg>
+        <h1 data-i18n="hero_title">Float a window</h1>
+        <p data-i18n="hero_sub">Paste a link, get a distraction-free window that stays on top.</p>
+      </div>
+
+      <form class="urlbar" id="form">
+        <input id="url" type="text" data-i18n-ph="url_placeholder" placeholder="youtube.com/watch?v=…" autofocus spellcheck="false" autocomplete="off">
+        <button class="btn" type="submit" data-i18n="float_btn">Float</button>
+      </form>
+
+      <div class="section-label" id="recent-label" data-i18n="recent" hidden>Recent</div>
+      <div class="recent" id="recent" hidden></div>
+    </div>
+
+    <div class="footer">
+      <button type="button" class="linklike" id="settings" data-i18n="settings">Settings</button>
+      <span>Flobro 1.0</span>
+    </div>
+  </div>
+  <script src="i18n.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
