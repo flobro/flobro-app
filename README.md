@@ -71,6 +71,14 @@ Or push a tag; the GitHub Actions workflow builds a universal macOS .dmg and a W
 git tag v1.0.0 && git push --tags
 ```
 
+## Code signing policy
+
+Windows builds: free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org). macOS builds are signed and notarized with an Apple Developer ID. All release binaries are built by GitHub Actions directly from this repository.
+
+Committers and reviewers: [members of the flobro organization](https://github.com/orgs/flobro/people). Approvers: [organization owners](https://github.com/orgs/flobro/people?query=role%3Aowner). Every signing request is approved manually.
+
+Privacy: the app only transfers the anonymous usage statistics described in the [privacy policy](https://flobro.app/privacy.html), and only while that setting is on.
+
 ## Settings
 
 Stored as JSON in the platform config dir (e.g. `~/Library/Application Support/app.flobro.desktop/settings.json`). Default page, open-on-launch, stay-on-top default, recent pages, and the analytics opt-out.
