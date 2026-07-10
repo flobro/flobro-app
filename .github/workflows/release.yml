@@ -33,24 +33,44 @@ jobs:
         with:
           workspaces: "src-tauri -> target"
 
-      - name: Build and release
-        uses: tauri-apps/tauri-action@v0
+      # macOS code signing + notarization (only used on the macos runner).
+      # Set these repository secrets; see SETUP-GUIDE.md for how to create them:
+      #   APPLE_CERTIFICATE            base64 of the Developer ID Application .p12
+      #   APPLE_CERTIFICATE_PASSWORD   password of that .p12
+      #   APPLE_SIGNING_IDENTITY       e.g. "Developer ID Application: Your Name (TEAMID)"
+      #   APPLE_ID                     your Apple ID email
+      #   APPLE_PASSWORD               app-specific password from appleid.apple.com
+      #   APPLE_TEAM_ID                your 10-character team id
+      # Missing secrets arrive as empty strings; the Tauri bundler treats an empty
+      # APPLE_CERTIFICATE as "present" and fails. Only export the ones that are set,
+      # so unsigned builds work before the secrets exist and signing starts
+      # automatically once they do.
+      - name: Export Apple signing env when secrets are set
+        if: matrix.platform == 'macos-latest'
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS code signing + notarization (only used on the macos runner).
-          # Set these repository secrets; see SETUP-GUIDE.md for how to create them:
-          #   APPLE_CERTIFICATE            base64 of the Developer ID Application .p12
-          #   APPLE_CERTIFICATE_PASSWORD   password of that .p12
-          #   APPLE_SIGNING_IDENTITY       e.g. "Developer ID Application: Your Name (TEAMID)"
-          #   APPLE_ID                     your Apple ID email
-          #   APPLE_PASSWORD               app-specific password from appleid.apple.com
-          #   APPLE_TEAM_ID                your 10-character team id
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            value="${!name}"
+            if [ -n "$value" ]; then
+              {
+                echo "${name}<<__FLOBRO_EOF__"
+                echo "$value"
+                echo "__FLOBRO_EOF__"
+              } >> "$GITHUB_ENV"
+            fi
+          done
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Flobro ${{ github.ref_name }}"
