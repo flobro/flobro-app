@@ -44,16 +44,33 @@
   var L = (navigator.language || 'en').toLowerCase().indexOf('nl') === 0 ? I18N.nl : I18N.en;
 
   function invoke(cmd, args) {
+    /* Remote pages don't always get the __TAURI__ global bundle; the
+     * internals object is injected whenever IPC is enabled, so fall back
+     * to it. Failures are logged so a misconfigured capability is visible
+     * in the webview console instead of a silently dead button. */
     try {
-      return window.__TAURI__.core.invoke(cmd, args || {});
+      var fn =
+        window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke
+          ? window.__TAURI__.core.invoke
+          : window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
+      if (!fn) return Promise.reject(new Error('Flobro: Tauri IPC unavailable'));
+      return Promise.resolve(fn(cmd, args || {})).catch(function (e) {
+        console.error('Flobro toolbar:', cmd, e);
+        throw e;
+      });
     } catch (e) {
+      console.error('Flobro toolbar:', cmd, e);
       return Promise.reject(e);
     }
   }
 
   function startDrag() {
     try {
-      window.__TAURI__.window.getCurrentWindow().startDragging();
+      if (window.__TAURI__ && window.__TAURI__.window) {
+        window.__TAURI__.window.getCurrentWindow().startDragging();
+      } else {
+        invoke('plugin:window|start_dragging');
+      }
     } catch {
       /* dragging unavailable */
     }
