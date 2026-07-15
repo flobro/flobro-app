@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/martijn/.dotfiles/**)",
+      "Read(//Users/martijn/.cargo/bin/**)",
+      "Bash(cargo-tauri *)"
+    ]
+  }
+}

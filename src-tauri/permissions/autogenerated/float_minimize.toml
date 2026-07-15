@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-float-minimize"
+description = "Enables the float_minimize command without any pre-configured scope."
+commands.allow = ["float_minimize"]
+
+[[permission]]
+identifier = "deny-float-minimize"
+description = "Denies the float_minimize command without any pre-configured scope."
+commands.deny = ["float_minimize"]

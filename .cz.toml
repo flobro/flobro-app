@@ -5,3 +5,8 @@ version_scheme = "semver"
 version_provider = "scm"
 update_changelog_on_bump = true
 changelog_incremental = true
+version_files = [
+  "package.json:\"version\"",
+  "src-tauri/tauri.conf.json:\"version\"",
+  "src-tauri/Cargo.toml:^version"
+]

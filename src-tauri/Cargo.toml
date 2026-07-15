@@ -1,6 +1,6 @@
 [package]
 name = "flobro"
-version = "1.0.0"
+version = "1.0.1"
 description = "Flobro — floating browser window"
 authors = ["Martijn Cornips"]
 license = "MIT"
