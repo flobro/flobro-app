@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-float-zoom"
+description = "Enables the float_zoom command without any pre-configured scope."
+commands.allow = ["float_zoom"]
+
+[[permission]]
+identifier = "deny-float-zoom"
+description = "Denies the float_zoom command without any pre-configured scope."
+commands.deny = ["float_zoom"]
