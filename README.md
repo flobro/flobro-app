@@ -73,7 +73,7 @@ git tag v1.0.0 && git push --tags
 
 ## Code signing policy
 
-Windows builds: free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org). macOS builds are signed and notarized with an Apple Developer ID. All release binaries are built by GitHub Actions directly from this repository.
+macOS builds are signed and notarized with an Apple Developer ID. Windows builds are not code signed yet (Windows may show a SmartScreen warning on first run; choose More info, then Run anyway); free signing through [SignPath Foundation](https://signpath.org) is planned once the project qualifies. All release binaries are built by GitHub Actions directly from this repository.
 
 Committers and reviewers: [members of the flobro organization](https://github.com/orgs/flobro/people). Approvers: [organization owners](https://github.com/orgs/flobro/people?query=role%3Aowner). Every signing request is approved manually.
 
