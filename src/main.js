@@ -63,6 +63,41 @@ $('#settings').addEventListener('click', () => invoke('open_settings'));
 $('#min').addEventListener('click', () => appWindow.minimize());
 $('#close').addEventListener('click', () => appWindow.close());
 
+/* Update check: silent on launch, banner only when something is available.
+ * Nothing downloads until the user clicks "Update now". */
+async function checkForUpdate() {
+  let info;
+  try {
+    info = await invoke('check_update');
+  } catch {
+    return; /* offline or updater not configured: stay quiet */
+  }
+  if (!info) return;
+
+  const banner = $('#update-banner');
+  const detail = $('#update-detail');
+  const t = window.FLOBRO_I18N.t;
+  detail.textContent = t('update_detail').replace('{version}', info.version);
+  banner.hidden = false;
+
+  $('#update-later').addEventListener('click', () => {
+    banner.hidden = true;
+  });
+  $('#update-now').addEventListener('click', async () => {
+    banner.dataset.busy = '1';
+    detail.textContent = t('update_installing');
+    try {
+      await invoke('install_update'); /* installs, then relaunches */
+    } catch (err) {
+      /* leave the banner up so the user can retry or download manually */
+      banner.dataset.busy = '';
+      detail.textContent = String(err);
+    }
+  });
+}
+
 setVersion();
 
 refreshRecent();
+
+checkForUpdate();

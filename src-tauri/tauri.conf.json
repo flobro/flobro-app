@@ -31,11 +31,21 @@
       "desktop": {
         "schemes": ["flobro"]
       }
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE5QUE0QkYzNkQ4NkU2MjUKUldRbDVvWnQ4MHVxR1Z0Q05FL2poekFVTUMwYWRiVVB0VkFVMDN5dnB3UXAyUlQyM01CMy9lMVIK",
+      "endpoints": [
+        "https://github.com/flobro/flobro-app/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   },
   "bundle": {
     "active": true,
     "category": "Productivity",
+    "createUpdaterArtifacts": true,
     "targets": ["dmg", "nsis"],
     "icon": [
       "icons/32x32.png",

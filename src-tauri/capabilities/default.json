@@ -13,6 +13,8 @@
     "allow-save-settings",
     "allow-open-float",
     "allow-open-settings",
-    "allow-show-launcher"
+    "allow-show-launcher",
+    "allow-check-update",
+    "allow-install-update"
   ]
 }

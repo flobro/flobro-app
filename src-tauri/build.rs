@@ -15,6 +15,8 @@ fn main() {
             "float_close",
             "open_settings",
             "show_launcher",
+            "check_update",
+            "install_update",
         ]),
     ))
     .expect("failed to run tauri-build");
