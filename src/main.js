@@ -47,6 +47,12 @@ async function floatUrl(url) {
   }
 }
 
+async function setVersion() {
+  const version = await window.__TAURI__.app.getVersion();
+  console.log('version', version);
+  $('.appVersion').textContent = version;
+}
+
 $('#form').addEventListener('submit', (e) => {
   e.preventDefault();
   const url = $('#url').value.trim();
@@ -56,5 +62,7 @@ $('#form').addEventListener('submit', (e) => {
 $('#settings').addEventListener('click', () => invoke('open_settings'));
 $('#min').addEventListener('click', () => appWindow.minimize());
 $('#close').addEventListener('click', () => appWindow.close());
+
+setVersion();
 
 refreshRecent();
