@@ -33,6 +33,11 @@ window.FLOBRO_I18N = (function () {
       clear_recent: 'Clear recent',
       support: 'Support Flobro',
       donate_once: 'Donate once',
+      update_title: 'Update available',
+      update_now: 'Update now',
+      update_later: 'Later',
+      update_detail: 'Version {version} is ready.',
+      update_installing: 'Downloading and installing…',
     },
     nl: {
       hero_title: 'Laat een venster zweven',
@@ -61,6 +66,11 @@ window.FLOBRO_I18N = (function () {
       clear_recent: 'Recent wissen',
       support: 'Steun Flobro',
       donate_once: 'Eenmalig doneren',
+      update_title: 'Update beschikbaar',
+      update_now: 'Nu bijwerken',
+      update_later: 'Later',
+      update_detail: 'Versie {version} staat klaar.',
+      update_installing: 'Downloaden en installeren…',
     },
   };
 

@@ -1,9 +1,68 @@
 use std::fs;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Mutex;
 use tauri::{AppHandle, Manager, PhysicalSize, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_deep_link::DeepLinkExt;
+use tauri_plugin_updater::UpdaterExt;
 
 static FLOAT_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+/* ------------------------------- updater -------------------------------
+ * Checks GitHub releases on launch. Nothing installs automatically: the
+ * launcher shows a banner with the version and notes, and only downloads
+ * and installs after the user clicks "Update now". Update authenticity is
+ * verified with a dedicated Tauri signing key (separate from the Apple and
+ * Windows code-signing certificates); with the placeholder public key in
+ * tauri.conf.json the check simply fails quietly and no banner appears. */
+#[derive(Default)]
+struct PendingUpdate(Mutex<Option<tauri_plugin_updater::Update>>);
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateInfo {
+    version: String,
+    current_version: String,
+    notes: String,
+}
+
+#[tauri::command]
+async fn check_update(
+    app: AppHandle,
+    pending: tauri::State<'_, PendingUpdate>,
+) -> Result<Option<UpdateInfo>, String> {
+    // Any failure (no update, offline, placeholder key) is treated as
+    // "no update" so a broken check never nags the user.
+    let updater = match app.updater() {
+        Ok(u) => u,
+        Err(_) => return Ok(None),
+    };
+    let found = updater.check().await.ok().flatten();
+    let info = found.as_ref().map(|u| UpdateInfo {
+        version: u.version.clone(),
+        current_version: u.current_version.clone(),
+        notes: u.body.clone().unwrap_or_default(),
+    });
+    *pending.0.lock().unwrap() = found;
+    Ok(info)
+}
+
+#[tauri::command]
+async fn install_update(
+    app: AppHandle,
+    pending: tauri::State<'_, PendingUpdate>,
+) -> Result<(), String> {
+    let update = pending.0.lock().unwrap().take();
+    let Some(update) = update else {
+        return Err("No pending update".into());
+    };
+    update
+        .download_and_install(|_chunk, _total| {}, || {})
+        .await
+        .map_err(|e| e.to_string())?;
+    // On Windows the installer has already exited the app; on macOS we
+    // relaunch into the freshly installed version.
+    app.restart();
+}
 
 const TOOLBAR_JS: &str = include_str!("toolbar.js");
 
@@ -276,6 +335,8 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(PendingUpdate::default())
         .invoke_handler(tauri::generate_handler![
             get_settings,
             save_settings,
@@ -286,7 +347,9 @@ pub fn run() {
             float_minimize,
             float_close,
             open_settings,
-            show_launcher
+            show_launcher,
+            check_update,
+            install_update
         ])
         .setup(|app| {
             let handle = app.handle().clone();
