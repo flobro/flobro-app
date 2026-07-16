@@ -12,8 +12,7 @@ const TOOLBAR_JS: &str = include_str!("toolbar.js");
  * - Only the HOSTNAME of floated pages is sent, never full URLs.
  * - Random anonymous id, no IP persistence ($ip: null), no other properties.
  * - Fully disabled through the "Share anonymous usage stats" setting.
- * Replace POSTHOG_KEY with the real project key; events are skipped while
- * the placeholder is in place. */
+ */
 const POSTHOG_KEY: &str = "phc_tmfA5uemSD7TscmzLWQPAiqYXxfNartjfYsrjWQ6rEot";
 const POSTHOG_HOST: &str = "https://eu.i.posthog.com";
 
@@ -217,7 +216,7 @@ async fn open_settings(app: AppHandle) -> Result<(), String> {
         .title("Flobro settings")
         .decorations(false)
         .transparent(true)
-        .inner_size(400.0, 560.0)
+        .inner_size(400.0, 650.0)
         .resizable(false)
         .always_on_top(true)
         .center()
