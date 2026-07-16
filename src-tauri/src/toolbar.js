@@ -109,7 +109,8 @@
       'opacity:0;transform:translateY(-100%);transition:opacity .18s ease-out,transform .18s ease-out;pointer-events:none}' +
       '.bar.visible{opacity:1;transform:translateY(0);pointer-events:auto}' +
       '.title{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
-      'display:flex;align-items:center;gap:6px;padding:0 6px;color:#aebfcd}' +
+      'display:flex;align-items:center;gap:6px;padding:0' +
+      ' 6px;color:#aebfcd;user-select:none;-webkit-user-select:none}' +
       '.title img{width:14px;height:14px;border-radius:3px}' +
       '.drag{flex:1 1 auto;align-self:stretch;cursor:grab;min-width:24px}' +
       'button{all:initial;cursor:pointer;width:28px;height:28px;border-radius:7px;display:inline-flex;' +
@@ -181,7 +182,8 @@
         '">' +
         ICONS.settings +
         '</button>';
-      var title = '<span class="title"><img alt="" hidden><span class="text"></span></span>';
+      var title =
+        '<span class="title drag"><img alt="" hidden><span' + ' class="text"></span></span>';
       var drag = '<div class="drag" title="' + L.drag + '"></div>';
       return (
         '<div class="bar" part="bar">' +
@@ -195,6 +197,9 @@
     var bar = shadow.querySelector('.bar');
     var $ = function (sel) {
       return shadow.querySelector(sel);
+    };
+    var $$ = function (sel) {
+      return shadow.querySelectorAll(sel);
     };
 
     /* title + favicon */
@@ -275,11 +280,10 @@
     });
 
     /* drag to move */
-    $('.drag').addEventListener('mousedown', function (e) {
-      if (e.button === 0) startDrag();
-    });
-    $('.title').addEventListener('mousedown', function (e) {
-      if (e.button === 0) startDrag();
+    $$('.drag').forEach((dragger) => {
+      dragger.addEventListener('mousedown', function (e) {
+        if (e.button === 0) startDrag();
+      });
     });
 
     document.documentElement.appendChild(host);
