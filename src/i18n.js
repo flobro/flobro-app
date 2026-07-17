@@ -38,6 +38,9 @@ window.FLOBRO_I18N = (function () {
       update_later: 'Later',
       update_detail: 'Version {version} is ready.',
       update_installing: 'Downloading and installing…',
+      update_changes: 'What changed',
+      updated_title: 'Updated to version {version}',
+      support_note: 'Updates are made with love. Love runs on donations.',
     },
     nl: {
       hero_title: 'Laat een venster zweven',
@@ -71,6 +74,9 @@ window.FLOBRO_I18N = (function () {
       update_later: 'Later',
       update_detail: 'Versie {version} staat klaar.',
       update_installing: 'Downloaden en installeren…',
+      update_changes: 'Wat is er nieuw',
+      updated_title: 'Bijgewerkt naar versie {version}',
+      support_note: 'Updates maak ik met liefde. Liefde draait op donaties.',
     },
   };
 
