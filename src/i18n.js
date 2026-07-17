@@ -40,7 +40,8 @@ window.FLOBRO_I18N = (function () {
       update_installing: 'Downloading and installing…',
       update_changes: 'What changed',
       updated_title: 'Updated to version {version}',
-      support_note: 'Updates are made with love. Love runs on donations.',
+      support_note_1: 'Open source, kept alive by you.',
+      support_note_2: 'Please consider a donation to keep Flobro alive.',
     },
     nl: {
       hero_title: 'Laat een venster zweven',
@@ -76,7 +77,8 @@ window.FLOBRO_I18N = (function () {
       update_installing: 'Downloaden en installeren…',
       update_changes: 'Wat is er nieuw',
       updated_title: 'Bijgewerkt naar versie {version}',
-      support_note: 'Updates doe ik met liefde. Liefde draait op donaties.',
+      support_note_1: 'Open source, levend gehouden door jou.',
+      support_note_2: 'Overweeg de ontwikkeling te steunen.',
     },
   };
 

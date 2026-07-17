@@ -142,12 +142,6 @@ $('#notes-close').addEventListener('click', closeNotesModal);
 $('#notes-modal').addEventListener('click', (e) => {
   if (e.target === $('#notes-modal')) closeNotesModal();
 });
-$('#notes-gh').addEventListener('click', () =>
-  window.__TAURI__.opener.openUrl('https://github.com/sponsors/cornips'),
-);
-$('#notes-mollie').addEventListener('click', () =>
-  window.__TAURI__.opener.openUrl('https://payment-links.mollie.com/payment/cnRzN8hBxK5zk5CwmD6rk'),
-);
 
 /* --------------------------------- updates ------------------------------ */
 
