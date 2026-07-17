@@ -76,7 +76,7 @@ window.FLOBRO_I18N = (function () {
       update_installing: 'Downloaden en installeren…',
       update_changes: 'Wat is er nieuw',
       updated_title: 'Bijgewerkt naar versie {version}',
-      support_note: 'Updates maak ik met liefde. Liefde draait op donaties.',
+      support_note: 'Updates doe ik met liefde. Liefde draait op donaties.',
     },
   };
 
