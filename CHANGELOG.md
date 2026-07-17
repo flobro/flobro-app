@@ -8,6 +8,34 @@ and this project adheres to
 generated from [Conventional Commits](https://www.conventionalcommits.org)
 using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
+## [Unreleased]
+
+## [1.1.0] - 2026-07-17
+
+### Added
+
+- Automatic updates: Flobro checks for a new version on launch and shows a small banner; nothing downloads or installs until you choose Update now. Updates are cryptographically verified before they are installed
+- "What changed" in the update banner opens the release notes right in the app
+- After an automatic update, Flobro shows the release notes once, with links to support development
+
+### Changed
+
+- Donations now run through the Flobro Mollie profile
+
+### Fixed
+
+- The launcher footer shows the real app version
+- The window title is no longer selectable text and dragging the title bar works as expected
+
+## [1.0.1] - 2026-07-15
+
+### Fixed
+
+- Float toolbar buttons (zoom, 16:9 snap, pin, minimize, settings, close) did nothing on remote pages: the app commands are now granted to float windows through the ACL
+- The injected toolbar falls back to the Tauri internals when the global API bundle is unavailable and logs failures to the webview console
+- Release builds no longer fail on macOS when the Apple signing secrets are absent; signing activates automatically once the secrets exist
+
+## [1.0.0] - 2026-07-10
 
 ### Added
 
@@ -19,33 +47,7 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 - Privacy-friendly, hostname-only usage stats via PostHog EU with opt-out
 - Signed and notarized macOS builds plus Windows NSIS installer via GitHub Actions
 
-[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/flobro/flobro-app/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/flobro/flobro-app/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/flobro/flobro-app/releases/tag/v1.0.0
-
-## v1.1.0 (2026-07-17)
-
-### Feat
-
-- in-app auto-update via the Tauri updater plugin
-
-### Fix
-
-- show dynamic app version
-- set proper dragging behavior on title bar
-
-## v1.0.1 (2026-07-15)
-
-### Fix
-
-- grant float toolbar commands to remote pages via the ACL
-
-## v1.0.0 (2026-07-10)
-
-### Feat
-
-- initial release
-
-### Fix
-
-- skip macos code signing while the Apple secrets are absent
