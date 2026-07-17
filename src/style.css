@@ -133,6 +133,121 @@ body {
   opacity: 0.6;
   pointer-events: none;
 }
+.update-banner .linklike {
+  align-self: flex-start;
+  font-size: 12px;
+}
+
+/* ---------- release notes modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+  background: rgba(22, 34, 44, 0.35);
+  backdrop-filter: blur(3px);
+}
+.modal {
+  width: 100%;
+  max-width: 340px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 50px rgba(22, 34, 44, 0.28);
+  overflow: hidden;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 10px;
+  font-size: 14px;
+}
+.modal-close {
+  all: unset;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.modal-close:hover {
+  background: var(--line);
+}
+.release-notes {
+  padding: 0 16px 14px;
+  overflow-y: auto;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.release-notes h2,
+.release-notes h3 {
+  font-size: 13px;
+  margin: 12px 0 4px;
+}
+.release-notes p {
+  margin: 6px 0;
+}
+.release-notes ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.release-notes li {
+  margin: 3px 0;
+}
+.release-notes code {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 0 4px;
+  font-size: 11.5px;
+}
+.release-notes a {
+  color: var(--blue-deep);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.modal-support {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.support-note {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+.support-row {
+  display: flex;
+  gap: 8px;
+}
+.support-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue-deep);
+  background: #e7f2fb;
+  border: 1px solid var(--line);
+}
+.support-btn:hover {
+  background: #d9ebf9;
+}
 
 .hero {
   text-align: center;

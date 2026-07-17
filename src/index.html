@@ -21,10 +21,28 @@
       <div class="update-text">
         <strong data-i18n="update_title">Update available</strong>
         <span id="update-detail"></span>
+        <button type="button" class="linklike" id="update-changes" data-i18n="update_changes">What changed</button>
       </div>
       <div class="update-actions">
         <button type="button" class="btn" id="update-now" data-i18n="update_now">Update now</button>
         <button type="button" class="linklike" id="update-later" data-i18n="update_later">Later</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="notes-modal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="notes-title">
+        <div class="modal-head">
+          <strong id="notes-title"></strong>
+          <button type="button" class="modal-close" id="notes-close" data-i18n-title="close">&#10005;</button>
+        </div>
+        <div class="release-notes" id="notes-body"></div>
+        <div class="modal-support" id="notes-support" hidden>
+          <span class="support-note" data-i18n="support_note">Updates are made with love. Love runs on donations.</span>
+          <div class="support-row">
+            <button type="button" class="support-btn" id="notes-gh">GitHub Sponsors</button>
+            <button type="button" class="support-btn" id="notes-mollie" data-i18n="donate_once">Donate once</button>
+          </div>
+        </div>
       </div>
     </div>
 
