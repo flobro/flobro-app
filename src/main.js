@@ -128,11 +128,19 @@ function showNotesModal(title, notesMarkdown, withSupport) {
     });
 }
 
-$('#notes-close').addEventListener('click', () => {
+function closeNotesModal() {
   $('#notes-modal').hidden = true;
-});
+  /* never re-celebrate an update after the modal was dismissed */
+  try {
+    localStorage.removeItem('flobro-pending-update');
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+$('#notes-close').addEventListener('click', closeNotesModal);
 $('#notes-modal').addEventListener('click', (e) => {
-  if (e.target === $('#notes-modal')) $('#notes-modal').hidden = true;
+  if (e.target === $('#notes-modal')) closeNotesModal();
 });
 $('#notes-gh').addEventListener('click', () =>
   window.__TAURI__.opener.openUrl('https://github.com/sponsors/cornips'),
