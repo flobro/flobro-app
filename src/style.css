@@ -14,8 +14,8 @@
   box-sizing: border-box;
 }
 
-/* The hidden attribute must always win, also over display:flex components */
 [hidden] {
+  /* biome-ignore lint/complexity/noImportantStyles: The hidden attribute must always win, also over display:flex components */
   display: none !important;
 }
 
@@ -32,6 +32,7 @@ body {
   color: var(--ink);
   user-select: none;
   -webkit-user-select: none;
+  overflow: hidden;
 }
 
 .window {
@@ -251,8 +252,10 @@ body {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex: 1;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 6px 8px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
@@ -509,6 +512,7 @@ body {
 .sponsors {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 .sponsor-btn {
   all: unset;
