@@ -46,7 +46,7 @@ $('#clear-recent').addEventListener('click', async () => {
 $('#website').addEventListener('click', () => openUrl('https://flobro.app'));
 $('#sponsor-gh').addEventListener('click', () => openUrl('https://github.com/sponsors/cornips'));
 $('#sponsor-mollie').addEventListener('click', () =>
-  openUrl('https://payment-links.mollie.com/payment/uFb9QAUBabzWMqCQ4xuhq'),
+  openUrl('https://payment-links.mollie.com/payment/cnRzN8hBxK5zk5CwmD6rk'),
 );
 
 /* A little feedback on the usage-stats toggle: confetti when it helps
