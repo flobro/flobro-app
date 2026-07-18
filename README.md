@@ -8,6 +8,18 @@
 
 Float any webpage in a frameless, always-on-top window. No interface at all until you move your mouse to the top edge, where a toolbar appears with zoom, 16:9 snap, pin, minimize, settings and close.
 
+## Install
+
+Grab the latest installer from [flobro.app](https://flobro.app) or the [releases page](https://github.com/flobro/flobro-app/releases/latest).
+
+On macOS, [Homebrew](https://brew.sh) works too:
+
+```bash
+brew install --cask flobro/tap/flobro
+```
+
+The cask lives in [flobro/homebrew-tap](https://github.com/flobro/homebrew-tap) and bumps itself automatically when a release is published.
+
 ## Architecture
 
 ```
