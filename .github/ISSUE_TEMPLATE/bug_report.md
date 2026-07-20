@@ -2,8 +2,10 @@
 name: Bug report
 about: Something is broken
 title: ''
-labels: bug
+labels: Bug
 assignees: ''
+type: Bug
+
 ---
 
 **Describe the bug**
@@ -22,7 +24,7 @@ If applicable, add screenshots.
 
 **Environment**
 - OS and version: [e.g. macOS 15.2, Windows 11]
-- App/extension version: [e.g. 1.0.0]
+- App version: [e.g. 1.0.0]
 
 **Additional context**
 Anything else that helps.
