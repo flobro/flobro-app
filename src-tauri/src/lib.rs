@@ -114,6 +114,8 @@ pub struct Settings {
     pub stay_on_top: bool,
     pub remember_recent: bool,
     pub share_usage: bool,
+    /// UI language: "auto" follows the system, or an explicit "en" / "nl".
+    pub language: String,
     pub anon_id: String,
     pub recent: Vec<String>,
 }
@@ -121,11 +123,12 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            default_url: "https://www.youtube.com".into(),
+            default_url: String::new(),
             open_default_on_start: false,
             stay_on_top: true,
             remember_recent: true,
             share_usage: true,
+            language: "auto".into(),
             anon_id: uuid::Uuid::new_v4().to_string(),
             recent: vec![],
         }
@@ -144,6 +147,20 @@ fn load_settings(app: &AppHandle) -> Settings {
         .and_then(|p| fs::read_to_string(p).ok())
         .and_then(|s| serde_json::from_str(&s).ok())
         .unwrap_or_default()
+}
+
+/// The UI language the toolbar and native menu should use.
+fn resolved_lang(settings: &Settings) -> &'static str {
+    let pref = settings.language.as_str();
+    if pref == "en" || pref == "nl" {
+        return if pref == "nl" { "nl" } else { "en" };
+    }
+    let sys = sys_locale::get_locale().unwrap_or_default().to_lowercase();
+    if sys.starts_with("nl") {
+        "nl"
+    } else {
+        "en"
+    }
 }
 
 #[tauri::command]
@@ -207,7 +224,7 @@ async fn open_float(app: AppHandle, url: String) -> Result<(), String> {
         .always_on_top(settings.stay_on_top)
         .inner_size(560.0, 348.0)
         .min_inner_size(170.0, 38.0)
-        .initialization_script(TOOLBAR_JS)
+        .initialization_script(&TOOLBAR_JS.replace("__FLOBRO_LANG__", resolved_lang(&settings)))
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -275,7 +292,7 @@ async fn open_settings(app: AppHandle) -> Result<(), String> {
         .title("Flobro settings")
         .decorations(false)
         .transparent(true)
-        .inner_size(400.0, 650.0)
+        .inner_size(400.0, 700.0)
         .resizable(false)
         .always_on_top(true)
         .center()
@@ -314,6 +331,97 @@ fn handle_deep_link(app: &AppHandle, link: &str) {
             let _ = open_float(handle, target).await;
         });
     }
+}
+
+/* ------------------------------ macOS menu ------------------------------
+ * Native menu bar with the usual categories. Preferences (Cmd+,) opens the
+ * settings window, File > New Float Window (Cmd+N) brings back the launcher,
+ * View > Reload Page (Cmd+R) reloads the focused float. Labels follow the
+ * app language (settings > Language, or the system language on auto). */
+#[cfg(target_os = "macos")]
+fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
+    use tauri::menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+    let nl = lang == "nl";
+    let t = |en: &str, nl_str: &str| {
+        if nl {
+            nl_str.to_string()
+        } else {
+            en.to_string()
+        }
+    };
+
+    let app_menu = SubmenuBuilder::new(app, "Flobro")
+        .about(Some(AboutMetadata::default()))
+        .separator()
+        .item(
+            &MenuItemBuilder::with_id(
+                "preferences",
+                t("Preferences\u{2026}", "Voorkeuren\u{2026}"),
+            )
+            .accelerator("Cmd+,")
+            .build(app)?,
+        )
+        .separator()
+        .services()
+        .separator()
+        .hide()
+        .hide_others()
+        .show_all()
+        .separator()
+        .quit()
+        .build()?;
+
+    let file_menu = SubmenuBuilder::new(app, t("File", "Bestand"))
+        .item(
+            &MenuItemBuilder::with_id("new-float", t("New Float Window", "Nieuw zwevend venster"))
+                .accelerator("Cmd+N")
+                .build(app)?,
+        )
+        .separator()
+        .close_window()
+        .build()?;
+
+    let edit_menu = SubmenuBuilder::new(app, t("Edit", "Wijzigen"))
+        .undo()
+        .redo()
+        .separator()
+        .cut()
+        .copy()
+        .paste()
+        .select_all()
+        .build()?;
+
+    let view_menu = SubmenuBuilder::new(app, t("View", "Weergave"))
+        .item(
+            &MenuItemBuilder::with_id("reload-page", t("Reload Page", "Pagina vernieuwen"))
+                .accelerator("Cmd+R")
+                .build(app)?,
+        )
+        .build()?;
+
+    let window_menu = SubmenuBuilder::new(app, t("Window", "Venster"))
+        .minimize()
+        .fullscreen()
+        .build()?;
+
+    let help_menu = SubmenuBuilder::new(app, "Help")
+        .item(
+            &MenuItemBuilder::with_id("getting-started", t("Getting Started", "Aan de slag"))
+                .build(app)?,
+        )
+        .item(&MenuItemBuilder::with_id("report-bug", t("Report a Bug", "Bug melden")).build(app)?)
+        .build()?;
+
+    MenuBuilder::new(app)
+        .items(&[
+            &app_menu,
+            &file_menu,
+            &edit_menu,
+            &view_menu,
+            &window_menu,
+            &help_menu,
+        ])
+        .build()
 }
 
 /* --------------------------------- run ---------------------------------- */
@@ -359,6 +467,47 @@ pub fn run() {
             let _ = save_settings(handle.clone(), settings.clone());
 
             track(&handle, "app_opened", None);
+
+            #[cfg(target_os = "macos")]
+            {
+                use tauri_plugin_opener::OpenerExt;
+                let menu = build_menu(app, resolved_lang(&settings))?;
+                app.set_menu(menu)?;
+                app.on_menu_event(|app, event| match event.id().as_ref() {
+                    "preferences" => {
+                        let handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = open_settings(handle).await;
+                        });
+                    }
+                    "new-float" => {
+                        let handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = show_launcher(handle).await;
+                        });
+                    }
+                    "reload-page" => {
+                        // Reload the focused float window, if any
+                        for (label, win) in app.webview_windows() {
+                            if label.starts_with("float-") && win.is_focused().unwrap_or(false) {
+                                let _ = win.eval("location.reload()");
+                            }
+                        }
+                    }
+                    "getting-started" => {
+                        let _ = app.opener().open_url(
+                            "https://github.com/flobro/flobro-app/wiki/Getting-Started",
+                            None::<&str>,
+                        );
+                    }
+                    "report-bug" => {
+                        let _ = app
+                            .opener()
+                            .open_url("https://github.com/flobro/flobro-app/issues", None::<&str>);
+                    }
+                    _ => {}
+                });
+            }
 
             // deep links delivered while running (macOS) or on cold start
             let dl_handle = handle.clone();
