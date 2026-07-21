@@ -11,6 +11,18 @@ const t = window.FLOBRO_I18N.t;
 window.FLOBRO_I18N.apply();
 let settings = null;
 
+/* Report uncaught settings-window errors anonymously; opt-out lives in Rust. */
+let errorsReported = 0;
+function reportError(message) {
+  if (errorsReported >= 5) return; /* never flood on an error loop */
+  errorsReported++;
+  invoke('report_error', { context: 'settings', message: String(message).slice(0, 300) }).catch(
+    () => {},
+  );
+}
+window.addEventListener('error', (e) => reportError(e.message || e.error));
+window.addEventListener('unhandledrejection', (e) => reportError(e.reason));
+
 async function load() {
   settings = await invoke('get_settings');
   $('#default-url').value = settings.default_url || '';

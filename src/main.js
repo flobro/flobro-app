@@ -7,6 +7,19 @@ const appWindow = window.__TAURI__.window.getCurrentWindow();
 const $ = (sel) => document.querySelector(sel);
 window.FLOBRO_I18N.apply();
 
+/* Report uncaught launcher errors anonymously; the opt-out lives in Rust.
+ * Visited websites run in float windows and are never touched by this. */
+let errorsReported = 0;
+function reportError(message) {
+  if (errorsReported >= 5) return; /* never flood on an error loop */
+  errorsReported++;
+  invoke('report_error', { context: 'launcher', message: String(message).slice(0, 300) }).catch(
+    () => {},
+  );
+}
+window.addEventListener('error', (e) => reportError(e.message || e.error));
+window.addEventListener('unhandledrejection', (e) => reportError(e.reason));
+
 async function refreshRecent() {
   const settings = await invoke('get_settings');
   const box = $('#recent');
