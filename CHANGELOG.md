@@ -30,6 +30,7 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
 ### Fixed
 
+- URLs typed in the new-tab page and the toolbar URL editor are restricted to http and https, matching the launcher
 - The toolbar pin and gear icons are optically centered and the dropdown menu uses the system font instead of a serif fallback
 - The title bar and the drag area share the same grab cursor
 - Float windows are granted the new-window command through the ACL
