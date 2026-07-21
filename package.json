@@ -1,6 +1,6 @@
 {
   "name": "flobro-app",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Flobro desktop app for Mac and Windows, built with Tauri 2 (Rust + system webview).",
   "license": "MIT",
