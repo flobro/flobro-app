@@ -540,3 +540,94 @@ body {
   height: 15px;
   flex: 0 0 auto;
 }
+
+/* ---------- recent header (label + clear) ---------- */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 4px 0 -6px;
+}
+.section-head .section-label {
+  margin: 0;
+}
+.section-head .linklike {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.section-head .linklike:hover {
+  color: var(--blue);
+}
+
+/* ---------- footer link cluster ---------- */
+.footer-links {
+  display: flex;
+  gap: 14px;
+}
+
+/* ---------- settings: language select ---------- */
+.field select {
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+  background: var(--card);
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23708090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+}
+.field select:focus {
+  border-color: var(--blue);
+}
+
+/* ---------- onboarding tour ---------- */
+.modal.onboarding {
+  text-align: center;
+  max-width: 320px;
+  padding: 20px 22px 16px;
+}
+.ob-art {
+  margin: 4px auto 10px;
+}
+.ob-art svg {
+  width: 200px;
+  height: 90px;
+  display: block;
+  margin: 0 auto;
+}
+.modal.onboarding strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.modal.onboarding p {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.ob-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ob-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line);
+}
+.ob-dot.on {
+  background: var(--blue);
+}
+.ob-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

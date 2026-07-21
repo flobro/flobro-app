@@ -60,6 +60,20 @@ $('#form').addEventListener('submit', (e) => {
 });
 
 $('#settings').addEventListener('click', () => invoke('open_settings'));
+$('#feedback').addEventListener('click', () =>
+  window.__TAURI__.opener.openUrl('https://github.com/flobro/flobro-app/issues'),
+);
+$('#clear-recent').addEventListener('click', async () => {
+  const settings = await invoke('get_settings');
+  settings.recent = [];
+  await invoke('save_settings', { settings });
+  refreshRecent();
+});
+
+/* settings window broadcasts language changes; re-render texts live */
+window.__TAURI__.event.listen('flobro-language', (e) => {
+  window.FLOBRO_I18N.setLang(e.payload);
+});
 $('#min').addEventListener('click', () => appWindow.minimize());
 $('#close').addEventListener('click', () => appWindow.close());
 
@@ -218,3 +232,58 @@ refreshRecent();
 celebrateUpdateIfAny();
 
 checkForUpdate();
+
+/* ------------------------------- onboarding ------------------------------ */
+
+/* First-run tour: three short steps mirroring the Getting Started wiki.
+ * Shown once; skipping counts as done. */
+const OB_KEY = 'flobro-onboarded';
+const OB_ART = [
+  /* step 1: link into a floating window */
+  '<svg viewBox="0 0 200 90"><rect x="18" y="34" width="96" height="22" rx="6" fill="none" stroke="#248BD2" stroke-width="3"/><path d="M120 45h26" stroke="#248BD2" stroke-width="3" stroke-linecap="round"/><path d="M140 38l8 7-8 7" fill="none" stroke="#248BD2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="152" y="22" width="42" height="34" rx="8" fill="#248BD2"/><rect x="142" y="34" width="42" height="34" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".35" stroke-width="3"/></svg>',
+  /* step 2: hover top edge reveals toolbar */
+  '<svg viewBox="0 0 200 90"><rect x="40" y="14" width="120" height="66" rx="9" fill="none" stroke="#248BD2" stroke-width="3"/><rect x="40" y="14" width="120" height="16" rx="8" fill="#248BD2"/><circle cx="54" cy="22" r="2.6" fill="#fff"/><circle cx="64" cy="22" r="2.6" fill="#fff"/><circle cx="74" cy="22" r="2.6" fill="#fff"/><path d="M100 52l0 16m0-16l-5 5m5-5l5 5" stroke="#248BD2" stroke-width="3" stroke-linecap="round" fill="none" transform="rotate(180 100 60)"/></svg>',
+  /* step 3: pin + multiple windows */
+  '<svg viewBox="0 0 200 90"><rect x="26" y="30" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".35" stroke-width="3"/><rect x="58" y="16" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".6" stroke-width="3"/><rect x="110" y="30" width="64" height="44" rx="8" fill="#248BD2"/><path d="M150 40l10 10-5.5 1.5-6.5 6.5.8 8-5-5-7 7-2.5-2.5 7-7-5-5 8 .8 6.5-6.5z" fill="#fff"/></svg>',
+];
+
+function startOnboarding() {
+  let done = false;
+  try {
+    done = !!localStorage.getItem(OB_KEY);
+  } catch {
+    done = true; /* no storage: never nag */
+  }
+  if (done) return;
+  const t = window.FLOBRO_I18N.t;
+  const modal = $('#onboarding');
+  const dots = $('#ob-dots');
+  let step = 0;
+  function render() {
+    $('#ob-art').innerHTML = OB_ART[step];
+    $('#ob-title').textContent = t(`ob_title_${step + 1}`);
+    $('#ob-body').textContent = t(`ob_body_${step + 1}`);
+    $('#ob-next').textContent = step === OB_ART.length - 1 ? t('ob_done') : t('ob_next');
+    dots.innerHTML = OB_ART.map(
+      (_, i) => `<span class="ob-dot${i === step ? ' on' : ''}"></span>`,
+    ).join('');
+  }
+  function finish() {
+    modal.hidden = true;
+    try {
+      localStorage.setItem(OB_KEY, '1');
+    } catch {
+      /* storage unavailable */
+    }
+  }
+  $('#ob-skip').addEventListener('click', finish);
+  $('#ob-next').addEventListener('click', () => {
+    if (step === OB_ART.length - 1) return finish();
+    step++;
+    render();
+  });
+  render();
+  modal.hidden = false;
+}
+
+startOnboarding();

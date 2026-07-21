@@ -63,16 +63,35 @@
       </div>
 
       <form class="urlbar" id="form">
-        <input id="url" type="text" data-i18n-ph="url_placeholder" placeholder="youtube.com/watch?v=…" autofocus spellcheck="false" autocomplete="off">
+        <input id="url" type="text" data-i18n-ph="url_placeholder" placeholder="Paste or type any link…" autofocus spellcheck="false" autocomplete="off">
         <button class="btn" type="submit" data-i18n="float_btn">Float</button>
       </form>
 
-      <div class="section-label" id="recent-label" data-i18n="recent" hidden>Recent</div>
+      <div class="section-head" id="recent-label" hidden>
+        <span class="section-label" data-i18n="recent">Recent</span>
+        <button type="button" class="linklike" id="clear-recent" data-i18n="clear_recent" data-i18n-title="clear_recent_title">Clear</button>
+      </div>
       <div class="recent" id="recent" hidden></div>
     </div>
 
+    <div class="modal-backdrop" id="onboarding" hidden>
+      <div class="modal onboarding" role="dialog" aria-modal="true" aria-labelledby="ob-title">
+        <div class="ob-art" id="ob-art" aria-hidden="true"></div>
+        <strong id="ob-title"></strong>
+        <p id="ob-body"></p>
+        <div class="ob-dots" id="ob-dots" aria-hidden="true"></div>
+        <div class="ob-actions">
+          <button type="button" class="linklike" id="ob-skip" data-i18n="ob_skip">Skip</button>
+          <button type="button" class="btn" id="ob-next" data-i18n="ob_next">Next</button>
+        </div>
+      </div>
+    </div>
+
     <div class="footer">
-      <button type="button" class="linklike" id="settings" data-i18n="settings">Settings</button>
+      <span class="footer-links">
+        <button type="button" class="linklike" id="settings" data-i18n="settings">Settings</button>
+        <button type="button" class="linklike" id="feedback" data-i18n="feedback">Share feedback</button>
+      </span>
       <span>Flobro <span class="appVersion"></span></span>
     </div>
   </div>

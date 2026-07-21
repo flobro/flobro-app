@@ -3,6 +3,7 @@
 
 const { invoke } = window.__TAURI__.core;
 const { openUrl } = window.__TAURI__.opener;
+const { emit } = window.__TAURI__.event;
 const appWindow = window.__TAURI__.window.getCurrentWindow();
 
 const $ = (sel) => document.querySelector(sel);
@@ -17,6 +18,7 @@ async function load() {
   $('#stay-on-top').checked = !!settings.stay_on_top;
   $('#remember-recent').checked = !!settings.remember_recent;
   $('#share-usage').checked = !!settings.share_usage;
+  $('#language').value = settings.language || 'auto';
 }
 
 async function save() {
@@ -25,7 +27,10 @@ async function save() {
   settings.stay_on_top = $('#stay-on-top').checked;
   settings.remember_recent = $('#remember-recent').checked;
   settings.share_usage = $('#share-usage').checked;
+  settings.language = $('#language').value;
   await invoke('save_settings', { settings });
+  window.FLOBRO_I18N.setLang(settings.language);
+  emit('flobro-language', settings.language);
   const status = $('#status');
   status.textContent = t('saved');
   setTimeout(() => {
@@ -35,15 +40,9 @@ async function save() {
 
 $('#save').addEventListener('click', save);
 $('#close').addEventListener('click', () => appWindow.close());
-$('#clear-recent').addEventListener('click', async () => {
-  settings.recent = [];
-  await invoke('save_settings', { settings });
-  $('#status').textContent = t('recent_cleared');
-  setTimeout(() => {
-    $('#status').textContent = '';
-  }, 1800);
-});
-$('#website').addEventListener('click', () => openUrl('https://flobro.app'));
+$('#feedback').addEventListener('click', () =>
+  openUrl('https://github.com/flobro/flobro-app/issues'),
+);
 
 /* A little feedback on the usage-stats toggle: confetti when it helps
  * development, a sad face drifting off when it doesn't. */
