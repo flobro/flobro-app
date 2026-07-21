@@ -10,6 +10,12 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-21
+
+### Fixed
+
+- Updating from 1.1.0 failed with "The signature verification failed": two release builds ran in parallel for the v1.2.0 tag and uploaded mismatched binaries and signatures. Release builds are now serialized per tag and this release ships a consistent set
+
 ## [1.2.0] - 2026-07-21
 
 ### Added
@@ -72,7 +78,8 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 - Privacy-friendly, hostname-only usage stats via PostHog EU with opt-out
 - Signed and notarized macOS builds plus Windows NSIS installer via GitHub Actions
 
-[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/flobro/flobro-app/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/flobro/flobro-app/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/flobro/flobro-app/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/flobro/flobro-app/compare/v1.0.0...v1.0.1
