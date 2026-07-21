@@ -18,6 +18,7 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
 ### Fixed
 
+- "What changed" and the post-update notes now show the actual release notes fetched from GitHub instead of the release draft placeholder
 - Updating from 1.1.0 failed with "The signature verification failed": two release builds ran in parallel for the v1.2.0 tag and uploaded mismatched binaries and signatures.
 
 ## [1.2.0] - 2026-07-21

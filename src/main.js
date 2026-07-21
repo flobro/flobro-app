@@ -182,6 +182,27 @@ $('#notes-modal').addEventListener('click', (e) => {
 
 const PENDING_UPDATE_KEY = 'flobro-pending-update';
 
+/* The updater manifest only carries the placeholder body the release draft
+ * was created with; the real notes are written on the GitHub release before
+ * publishing. Fetch those on demand (public API, CORS-enabled) and fall back
+ * to the manifest text when offline or not yet published. */
+async function fetchReleaseNotes(version, fallback) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/flobro/flobro-app/releases/tags/v${version}`,
+      { headers: { Accept: 'application/vnd.github+json' }, signal: ctrl.signal },
+    );
+    if (!res.ok) throw new Error(String(res.status));
+    return (await res.json()).body || fallback;
+  } catch {
+    return fallback;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /* Update check: silent on launch, banner only when something is available.
  * Nothing downloads until the user clicks "Update now". Manual checks
  * (macOS menu > Check for Updates) are handled in Rust with a native dialog. */
@@ -194,8 +215,10 @@ function bindUpdateBanner() {
   const banner = $('#update-banner');
   const detail = $('#update-detail');
   const t = window.FLOBRO_I18N.t;
-  $('#update-changes').addEventListener('click', () => {
-    if (updateInfo) showNotesModal(`Flobro ${updateInfo.version}`, updateInfo.notes, false);
+  $('#update-changes').addEventListener('click', async () => {
+    if (!updateInfo) return;
+    const notes = await fetchReleaseNotes(updateInfo.version, updateInfo.notes);
+    showNotesModal(`Flobro ${updateInfo.version}`, notes, false);
   });
   $('#update-later').addEventListener('click', () => {
     banner.hidden = true;
@@ -255,7 +278,8 @@ async function celebrateUpdateIfAny() {
   const current = await window.__TAURI__.app.getVersion();
   if (pending.version === current) {
     const t = window.FLOBRO_I18N.t;
-    showNotesModal(t('updated_title').replace('{version}', current), pending.notes, true);
+    const notes = await fetchReleaseNotes(current, pending.notes);
+    showNotesModal(t('updated_title').replace('{version}', current), notes, true);
   }
   localStorage.removeItem(PENDING_UPDATE_KEY);
 }
