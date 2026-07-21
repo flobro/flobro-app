@@ -413,6 +413,11 @@
       $('.zlbl').textContent = Math.round(zoom * 100) + '%';
       invoke('float_zoom', { factor: zoom });
     }
+    /* The native View menu drives zoom through this hook, so the menu, the
+     * toolbar buttons and the zoom label stay in sync. Delta 0 resets. */
+    window.__FLOBRO_ZOOM_BY__ = function (delta) {
+      setZoom(delta === 0 ? 1 : zoom + delta);
+    };
     $('.zo').addEventListener('click', function () {
       setZoom(zoom - 0.1);
     });

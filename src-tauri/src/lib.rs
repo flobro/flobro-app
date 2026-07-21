@@ -428,7 +428,8 @@ fn handle_deep_link(app: &AppHandle, link: &str) {
  * predefined items get explicit texts; their defaults are English and
  * spell the app after the binary name). Preferences (Cmd+,) opens the
  * settings window, File > New Float Window (Cmd+N) opens a blank float,
- * View > Reload Page (Cmd+R) reloads the focused float. */
+ * View holds Reload (Cmd+R), zoom (Cmd+= / Cmd+- / Cmd+0) and the 16:9
+ * snap, all acting on the focused float. */
 #[cfg(target_os = "macos")]
 fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
     use tauri::menu::{
@@ -539,6 +540,24 @@ fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<t
                 .accelerator("Cmd+R")
                 .build(app)?,
         )
+        .separator()
+        .item(
+            &MenuItemBuilder::with_id("zoom-in", t("Zoom In", "Inzoomen"))
+                .accelerator("Cmd+=")
+                .build(app)?,
+        )
+        .item(
+            &MenuItemBuilder::with_id("zoom-out", t("Zoom Out", "Uitzoomen"))
+                .accelerator("Cmd+-")
+                .build(app)?,
+        )
+        .item(
+            &MenuItemBuilder::with_id("zoom-reset", t("Actual Size", "Ware grootte"))
+                .accelerator("Cmd+0")
+                .build(app)?,
+        )
+        .separator()
+        .item(&MenuItemBuilder::with_id("aspect-169", t("Snap to 16:9", "Naar 16:9")).build(app)?)
         .build()?;
 
     let window_menu = SubmenuBuilder::new(app, t("Window", "Venster"))
@@ -657,6 +676,29 @@ pub fn run() {
                         for (label, win) in app.webview_windows() {
                             if label.starts_with("float-") && win.is_focused().unwrap_or(false) {
                                 let _ = win.eval("location.reload()");
+                            }
+                        }
+                    }
+                    "zoom-in" | "zoom-out" | "zoom-reset" => {
+                        // Zoom runs through the toolbar's hook so the toolbar's
+                        // zoom label stays in sync with the menu.
+                        let js = match event.id().as_ref() {
+                            "zoom-in" => "window.__FLOBRO_ZOOM_BY__&&window.__FLOBRO_ZOOM_BY__(.1)",
+                            "zoom-out" => {
+                                "window.__FLOBRO_ZOOM_BY__&&window.__FLOBRO_ZOOM_BY__(-.1)"
+                            }
+                            _ => "window.__FLOBRO_ZOOM_BY__&&window.__FLOBRO_ZOOM_BY__(0)",
+                        };
+                        for (label, win) in app.webview_windows() {
+                            if label.starts_with("float-") && win.is_focused().unwrap_or(false) {
+                                let _ = win.eval(js);
+                            }
+                        }
+                    }
+                    "aspect-169" => {
+                        for (label, win) in app.webview_windows() {
+                            if label.starts_with("float-") && win.is_focused().unwrap_or(false) {
+                                let _ = float_aspect(win);
                             }
                         }
                     }
