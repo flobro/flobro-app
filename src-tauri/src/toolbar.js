@@ -13,6 +13,7 @@
 
   var HIDE_DELAY = 1200; // ms after the mouse leaves before fading out
   var HOT_ZONE = 46; // px from the top edge that reveals the toolbar
+  var DRAG_THRESHOLD = 4; // px of movement before a titlebar press becomes a drag
   var zoom = 1;
   var pinned = true;
   var hideTimer = null;
@@ -26,12 +27,12 @@
       refresh: 'Refresh',
       aspect: 'Snap to 16:9',
       pin: 'Toggle stay-on-top',
-      newWindow: 'New float window',
+      newWindow: 'New window',
+      menu: 'Menu',
       minimize: 'Minimize',
       settings: 'Settings',
       close: 'Close',
-      drag: 'Drag to move',
-      editUrl: 'Click to change the URL',
+      drag: 'Drag to move, double-click to edit the URL',
     },
     nl: {
       zoom: 'Zoom',
@@ -41,12 +42,12 @@
       refresh: 'Vernieuwen',
       aspect: 'Naar 16:9',
       pin: 'Bovenaan blijven aan/uit',
-      newWindow: 'Nieuw zwevend venster',
+      newWindow: 'Nieuw venster',
+      menu: 'Menu',
       minimize: 'Minimaliseren',
       settings: 'Instellingen',
       close: 'Sluiten',
-      drag: 'Sleep om te verplaatsen',
-      editUrl: 'Klik om de URL te wijzigen',
+      drag: 'Sleep om te verplaatsen, dubbelklik om de URL te wijzigen',
     },
   };
   // The app replaces __FLOBRO_LANG__ with the language from settings; if the
@@ -91,7 +92,6 @@
   }
 
   var ICONS = {
-    zoom: '<svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.4" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
     zoomOut:
       '<svg viewBox="0 0 16 16"><path d="M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
     zoomIn:
@@ -104,6 +104,7 @@
       '<svg viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
     pin: '<svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z" fill="currentColor" stroke="none"/></svg>',
     plus: '<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
+    dots: '<svg viewBox="0 0 16 16"><circle cx="8" cy="3.2" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="12.8" r="1.5" fill="currentColor"/></svg>',
     minimize:
       '<svg viewBox="0 0 16 16"><path d="M3 12h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
     settings:
@@ -126,38 +127,52 @@
       'font:12px/1 -apple-system,"Segoe UI",system-ui,sans-serif;color:#dfe9f2;' +
       'opacity:0;transform:translateY(-100%);transition:opacity .18s ease-out,transform .18s ease-out;pointer-events:none}' +
       '.bar.visible{opacity:1;transform:translateY(0);pointer-events:auto}' +
+      /* The title + spacer pair and the urlbox are two faces of the same
+       * flex:1 slot, so toggling them never moves the buttons around it. */
+      '.mid{flex:1 1 auto;min-width:0;display:flex;align-items:center;align-self:stretch}' +
       '.title{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
-      'display:flex;align-items:center;gap:6px;padding:0 6px;border-radius:7px;' +
-      'color:#aebfcd;user-select:none;-webkit-user-select:none;cursor:text;height:28px}' +
+      'display:flex;align-items:center;gap:6px;padding:0 6px;border-radius:7px;height:28px;' +
+      'color:#aebfcd;user-select:none;-webkit-user-select:none;cursor:move}' +
       '.title:hover{background:rgba(255,255,255,.1)}' +
       '.title img{width:14px;height:14px;border-radius:3px}' +
-      '.urlbox{display:none;flex:1 1 auto;min-width:0;height:26px;margin:0 6px;padding:0 10px;' +
+      '.spacer{flex:1 1 auto;align-self:stretch;cursor:grab;min-width:24px}' +
+      '.urlbox{display:none;flex:1 1 auto;min-width:0;height:26px;margin:0 2px;padding:0 10px;' +
       'border:1px solid rgba(255,255,255,.25);border-radius:7px;background:rgba(0,0,0,.35);' +
       'color:#eef5fb;font:12px -apple-system,"Segoe UI",system-ui,sans-serif;outline:none;' +
-      'user-select:text;-webkit-user-select:text}' +
+      'box-sizing:border-box;user-select:text;-webkit-user-select:text}' +
       '.urlbox:focus{border-color:#3fa9f5}' +
       '.bar.editing .urlbox{display:block}' +
-      '.bar.editing .title,.bar.editing .drag,.bar.editing .zoomwrap{display:none}' +
-      '.drag{flex:1 1 auto;align-self:stretch;cursor:grab;min-width:24px}' +
+      '.bar.editing .title,.bar.editing .spacer{display:none}' +
       'button{all:initial;cursor:pointer;width:28px;height:28px;border-radius:7px;display:inline-flex;' +
-      'align-items:center;justify-content:center;color:#dfe9f2}' +
+      'align-items:center;justify-content:center;color:#dfe9f2;flex:0 0 auto}' +
       'button:hover{background:rgba(255,255,255,.14)}' +
       'button.close:hover{background:#d64545;color:#fff}' +
       'button.pin.off{color:#7a8a98}' +
-      'button.zm.open{background:rgba(255,255,255,.14)}' +
+      'button.mn.open{background:rgba(255,255,255,.14)}' +
       'button svg{width:15px;height:15px;display:block}' +
-      '.zoomwrap{display:none;align-items:center;gap:2px;padding:0 2px;border-radius:8px;' +
-      'background:rgba(255,255,255,.08)}' +
-      '.zoomwrap.open{display:inline-flex}' +
-      '.zoomlabel{min-width:34px;text-align:center;color:#aebfcd;font-size:11px}' +
+      /* Chromium-style dropdown menu */
+      '.menu{position:fixed;top:40px;min-width:200px;padding:6px;border-radius:12px;display:none;' +
+      'background:rgba(30,39,48,.98);backdrop-filter:blur(14px);box-shadow:0 10px 34px rgba(0,0,0,.45);' +
+      'border:1px solid rgba(255,255,255,.09)}' +
+      '.menu.open{display:block}' +
+      '.mi{display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 10px;' +
+      'border-radius:8px;box-sizing:border-box;cursor:pointer;color:#dfe9f2}' +
+      '.mi:hover{background:rgba(255,255,255,.12)}' +
+      '.mi svg{width:15px;height:15px;flex:0 0 auto}' +
+      '.mi .lbl{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.zrow{display:flex;align-items:center;gap:2px;height:32px;padding:0 4px}' +
+      '.zrow .zlbl{flex:1 1 auto;text-align:center;color:#aebfcd;font-size:12px;' +
+      'font-variant-numeric:tabular-nums}' +
+      '.msep{border:0;border-top:1px solid rgba(255,255,255,.12);margin:6px 4px}' +
       '</style>' +
-      buildBarHtml();
+      buildBarHtml() +
+      buildMenuHtml();
+
+    var isMac = /mac/i.test(navigator.platform || '') || /mac os/i.test(navigator.userAgent || '');
 
     function buildBarHtml() {
       // macOS users expect window controls on the left (traffic-light side);
       // everyone else gets them on the right.
-      var isMac =
-        /mac/i.test(navigator.platform || '') || /mac os/i.test(navigator.userAgent || '');
       var windowControlsLeft =
         '<button class="close" title="' +
         L.close +
@@ -180,14 +195,47 @@
         '">' +
         ICONS.close +
         '</button>';
-      var zoomwrap =
-        '<span class="zoomwrap">' +
+      var actions =
+        '<button class="rf" title="' +
+        L.refresh +
+        '">' +
+        ICONS.refresh +
+        '</button>' +
+        '<button class="pin" title="' +
+        L.pin +
+        '">' +
+        ICONS.pin +
+        '</button>' +
+        '<button class="mn" title="' +
+        L.menu +
+        '">' +
+        ICONS.dots +
+        '</button>';
+      var mid =
+        '<span class="mid">' +
+        '<span class="title" title="' +
+        L.drag +
+        '"><img alt="" hidden><span class="text"></span></span>' +
+        '<span class="spacer"></span>' +
+        '<input class="urlbox" type="text" spellcheck="false">' +
+        '</span>';
+      return (
+        '<div class="bar" part="bar">' +
+        (isMac ? windowControlsLeft + mid + actions : mid + actions + windowControlsRight) +
+        '</div>'
+      );
+    }
+
+    function buildMenuHtml() {
+      return (
+        '<div class="menu">' +
+        '<div class="zrow">' +
         '<button class="zo" title="' +
         L.zoomOut +
         '">' +
         ICONS.zoomOut +
         '</button>' +
-        '<span class="zoomlabel">100%</span>' +
+        '<span class="zlbl">100%</span>' +
         '<button class="zi" title="' +
         L.zoomIn +
         '">' +
@@ -198,55 +246,30 @@
         '">' +
         ICONS.zoomReset +
         '</button>' +
-        '</span>';
-      var actions =
-        '<button class="rf" title="' +
-        L.refresh +
-        '">' +
-        ICONS.refresh +
-        '</button>' +
-        '<button class="zm" title="' +
-        L.zoom +
-        '">' +
-        ICONS.zoom +
-        '</button>' +
-        zoomwrap +
-        '<button class="ar" title="' +
-        L.aspect +
-        '">' +
+        '</div>' +
+        '<hr class="msep">' +
+        '<div class="mi ar">' +
         ICONS.aspect +
-        '</button>' +
-        '<button class="pin" title="' +
-        L.pin +
-        '">' +
-        ICONS.pin +
-        '</button>' +
-        '<button class="nw" title="' +
-        L.newWindow +
-        '">' +
+        '<span class="lbl">' +
+        L.aspect +
+        '</span></div>' +
+        '<div class="mi nw">' +
         ICONS.plus +
-        '</button>' +
-        '<button class="cfg" title="' +
-        L.settings +
-        '">' +
+        '<span class="lbl">' +
+        L.newWindow +
+        '</span></div>' +
+        '<hr class="msep">' +
+        '<div class="mi cfg">' +
         ICONS.settings +
-        '</button>';
-      var title =
-        '<span class="title" title="' +
-        L.editUrl +
-        '"><img alt="" hidden><span class="text"></span></span>';
-      var urlbox = '<input class="urlbox" type="text" spellcheck="false">';
-      var drag = '<div class="drag" title="' + L.drag + '"></div>';
-      return (
-        '<div class="bar" part="bar">' +
-        (isMac
-          ? windowControlsLeft + title + urlbox + drag + actions
-          : title + urlbox + drag + actions + windowControlsRight) +
+        '<span class="lbl">' +
+        L.settings +
+        '</span></div>' +
         '</div>'
       );
     }
 
     var bar = shadow.querySelector('.bar');
+    var menu = shadow.querySelector('.menu');
     var $ = function (sel) {
       return shadow.querySelector(sel);
     };
@@ -278,8 +301,8 @@
       bar.classList.add('visible');
     }
     function scheduleHide() {
-      /* never hide mid-edit; losing a half-typed URL is infuriating */
-      if (bar.classList.contains('editing')) return;
+      /* never hide mid-edit or with the menu open */
+      if (bar.classList.contains('editing') || menu.classList.contains('open')) return;
       clearTimeout(hideTimer);
       hideTimer = setTimeout(function () {
         bar.classList.remove('visible');
@@ -297,11 +320,41 @@
     bar.addEventListener('mouseenter', show);
     bar.addEventListener('mouseleave', scheduleHide);
 
-    /* URL editing: click the title, type, Enter navigates, Esc cancels */
+    /* dropdown menu */
+    function closeMenu() {
+      menu.classList.remove('open');
+      $('.mn').classList.remove('open');
+      scheduleHide();
+    }
+    function toggleMenu() {
+      if (menu.classList.contains('open')) return closeMenu();
+      var btn = $('.mn').getBoundingClientRect();
+      /* right-align the panel with the menu button */
+      menu.style.right = Math.max(6, window.innerWidth - btn.right) + 'px';
+      menu.style.left = 'auto';
+      menu.classList.add('open');
+      $('.mn').classList.add('open');
+      show();
+    }
+    $('.mn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleMenu();
+    });
+    document.addEventListener('click', function () {
+      if (menu.classList.contains('open')) closeMenu();
+    });
+    menu.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && menu.classList.contains('open')) closeMenu();
+    });
+
+    /* URL editing: double-click the title, Enter navigates, Esc cancels */
     var urlbox = $('.urlbox');
     function openUrlEdit() {
       bar.classList.add('editing');
-      urlbox.value = location.href;
+      urlbox.value = location.href === 'about:blank' ? '' : location.href;
       urlbox.focus();
       urlbox.select();
     }
@@ -309,7 +362,6 @@
       bar.classList.remove('editing');
       scheduleHide();
     }
-    $('.title').addEventListener('click', openUrlEdit);
     urlbox.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') return closeUrlEdit();
       if (e.key !== 'Enter') return;
@@ -321,16 +373,41 @@
     });
     urlbox.addEventListener('blur', closeUrlEdit);
 
+    /* titlebar: press-and-move drags, double-click edits the URL */
+    var press = null;
+    function onPress(e) {
+      if (e.button !== 0) return;
+      press = { x: e.clientX, y: e.clientY };
+    }
+    function onMove(e) {
+      if (!press) return;
+      if (
+        Math.abs(e.clientX - press.x) > DRAG_THRESHOLD ||
+        Math.abs(e.clientY - press.y) > DRAG_THRESHOLD
+      ) {
+        press = null;
+        startDrag();
+      }
+    }
+    function onRelease() {
+      press = null;
+    }
+    var title = $('.title');
+    title.addEventListener('mousedown', onPress);
+    title.addEventListener('mousemove', onMove);
+    title.addEventListener('mouseup', onRelease);
+    title.addEventListener('dblclick', openUrlEdit);
+    /* the empty spacer is a pure drag surface, like before */
+    $('.spacer').addEventListener('mousedown', function (e) {
+      if (e.button === 0) startDrag();
+    });
+
     /* actions */
     function setZoom(z) {
       zoom = Math.min(5, Math.max(0.25, z));
-      $('.zoomlabel').textContent = Math.round(zoom * 100) + '%';
+      $('.zlbl').textContent = Math.round(zoom * 100) + '%';
       invoke('float_zoom', { factor: zoom });
     }
-    $('.zm').addEventListener('click', function () {
-      this.classList.toggle('open');
-      $('.zoomwrap').classList.toggle('open');
-    });
     $('.zo').addEventListener('click', function () {
       setZoom(zoom - 0.1);
     });
@@ -344,6 +421,7 @@
       location.reload();
     });
     $('.ar').addEventListener('click', function () {
+      closeMenu();
       invoke('float_aspect');
     });
     $('.pin').addEventListener('click', function () {
@@ -352,21 +430,18 @@
       invoke('float_pin', { pinned: pinned });
     });
     $('.nw').addEventListener('click', function () {
-      invoke('show_launcher');
+      closeMenu();
+      invoke('float_new');
     });
     $('.min').addEventListener('click', function () {
       invoke('float_minimize');
     });
     $('.cfg').addEventListener('click', function () {
+      closeMenu();
       invoke('open_settings');
     });
     $('.close').addEventListener('click', function () {
       invoke('float_close');
-    });
-
-    /* drag to move */
-    $('.drag').addEventListener('mousedown', function (e) {
-      if (e.button === 0) startDrag();
     });
 
     document.documentElement.appendChild(host);

@@ -74,6 +74,9 @@ $('#clear-recent').addEventListener('click', async () => {
 window.__TAURI__.event.listen('flobro-language', (e) => {
   window.FLOBRO_I18N.setLang(e.payload);
 });
+/* macOS menu: manual update check and onboarding replay */
+window.__TAURI__.event.listen('flobro-check-updates', () => checkForUpdate(true));
+window.__TAURI__.event.listen('flobro-show-onboarding', () => startOnboarding(true));
 $('#min').addEventListener('click', () => appWindow.minimize());
 $('#close').addEventListener('click', () => appWindow.close());
 
@@ -162,36 +165,32 @@ $('#notes-modal').addEventListener('click', (e) => {
 const PENDING_UPDATE_KEY = 'flobro-pending-update';
 
 /* Update check: silent on launch, banner only when something is available.
- * Nothing downloads until the user clicks "Update now". */
-async function checkForUpdate() {
-  let info;
-  try {
-    info = await invoke('check_update');
-  } catch {
-    return; /* offline or updater not configured: stay quiet */
-  }
-  if (!info) return;
+ * Nothing downloads until the user clicks "Update now". A manual check
+ * (macOS menu > Check for Updates) also reports "up to date". */
+let updateBound = false;
+let updateInfo = null;
 
+function bindUpdateBanner() {
+  if (updateBound) return;
+  updateBound = true;
   const banner = $('#update-banner');
   const detail = $('#update-detail');
   const t = window.FLOBRO_I18N.t;
-  detail.textContent = t('update_detail').replace('{version}', info.version);
-  banner.hidden = false;
-
   $('#update-changes').addEventListener('click', () => {
-    showNotesModal(`Flobro ${info.version}`, info.notes, false);
+    if (updateInfo) showNotesModal(`Flobro ${updateInfo.version}`, updateInfo.notes, false);
   });
   $('#update-later').addEventListener('click', () => {
     banner.hidden = true;
   });
   $('#update-now').addEventListener('click', async () => {
+    if (!updateInfo) return;
     banner.dataset.busy = '1';
     detail.textContent = t('update_installing');
     /* remember the notes so the relaunched version can celebrate the update */
     try {
       localStorage.setItem(
         PENDING_UPDATE_KEY,
-        JSON.stringify({ version: info.version, notes: info.notes }),
+        JSON.stringify({ version: updateInfo.version, notes: updateInfo.notes }),
       );
     } catch {
       /* storage unavailable: skip the post-update popup */
@@ -205,6 +204,38 @@ async function checkForUpdate() {
       localStorage.removeItem(PENDING_UPDATE_KEY);
     }
   });
+}
+
+async function checkForUpdate(manual) {
+  bindUpdateBanner();
+  const banner = $('#update-banner');
+  const detail = $('#update-detail');
+  const t = window.FLOBRO_I18N.t;
+  let info;
+  try {
+    info = await invoke('check_update');
+  } catch {
+    info = null; /* offline or updater not configured */
+  }
+  if (!info) {
+    if (manual) {
+      /* reuse the banner as a short "all good" note */
+      banner.classList.add('ok');
+      $('#update-banner strong').textContent = t('up_to_date');
+      detail.textContent = '';
+      banner.hidden = false;
+      setTimeout(() => {
+        banner.hidden = true;
+        banner.classList.remove('ok');
+        $('#update-banner strong').textContent = t('update_title');
+      }, 3000);
+    }
+    return;
+  }
+  updateInfo = info;
+  $('#update-banner strong').textContent = t('update_title');
+  detail.textContent = t('update_detail').replace('{version}', info.version);
+  banner.hidden = false;
 }
 
 /* After a successful auto-update the stored version matches the running one:
@@ -247,43 +278,49 @@ const OB_ART = [
   '<svg viewBox="0 0 200 90"><rect x="26" y="30" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".35" stroke-width="3"/><rect x="58" y="16" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".6" stroke-width="3"/><rect x="110" y="30" width="64" height="44" rx="8" fill="#248BD2"/><path d="M150 40l10 10-5.5 1.5-6.5 6.5.8 8-5-5-7 7-2.5-2.5 7-7-5-5 8 .8 6.5-6.5z" fill="#fff"/></svg>',
 ];
 
-function startOnboarding() {
+let obStep = 0;
+let obBound = false;
+
+function obRender() {
+  const t = window.FLOBRO_I18N.t;
+  $('#ob-art').innerHTML = OB_ART[obStep];
+  $('#ob-title').textContent = t(`ob_title_${obStep + 1}`);
+  $('#ob-body').textContent = t(`ob_body_${obStep + 1}`);
+  $('#ob-next').textContent = obStep === OB_ART.length - 1 ? t('ob_done') : t('ob_next');
+  $('#ob-dots').innerHTML = OB_ART.map(
+    (_, i) => `<span class="ob-dot${i === obStep ? ' on' : ''}"></span>`,
+  ).join('');
+}
+
+function obFinish() {
+  $('#onboarding').hidden = true;
+  try {
+    localStorage.setItem(OB_KEY, '1');
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+function startOnboarding(force) {
   let done = false;
   try {
     done = !!localStorage.getItem(OB_KEY);
   } catch {
     done = true; /* no storage: never nag */
   }
-  if (done) return;
-  const t = window.FLOBRO_I18N.t;
-  const modal = $('#onboarding');
-  const dots = $('#ob-dots');
-  let step = 0;
-  function render() {
-    $('#ob-art').innerHTML = OB_ART[step];
-    $('#ob-title').textContent = t(`ob_title_${step + 1}`);
-    $('#ob-body').textContent = t(`ob_body_${step + 1}`);
-    $('#ob-next').textContent = step === OB_ART.length - 1 ? t('ob_done') : t('ob_next');
-    dots.innerHTML = OB_ART.map(
-      (_, i) => `<span class="ob-dot${i === step ? ' on' : ''}"></span>`,
-    ).join('');
+  if (done && !force) return;
+  obStep = 0;
+  if (!obBound) {
+    obBound = true;
+    $('#ob-skip').addEventListener('click', obFinish);
+    $('#ob-next').addEventListener('click', () => {
+      if (obStep === OB_ART.length - 1) return obFinish();
+      obStep++;
+      obRender();
+    });
   }
-  function finish() {
-    modal.hidden = true;
-    try {
-      localStorage.setItem(OB_KEY, '1');
-    } catch {
-      /* storage unavailable */
-    }
-  }
-  $('#ob-skip').addEventListener('click', finish);
-  $('#ob-next').addEventListener('click', () => {
-    if (step === OB_ART.length - 1) return finish();
-    step++;
-    render();
-  });
-  render();
-  modal.hidden = false;
+  obRender();
+  $('#onboarding').hidden = false;
 }
 
 startOnboarding();
