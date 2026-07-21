@@ -110,7 +110,7 @@
       '<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/><path d="M13 1.8v3h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     aspect:
       '<svg viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
-    pin: '<svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z" fill="currentColor" stroke="none" transform="translate(-.7 .4)"/></svg>',
+    pin: '<svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z" fill="currentColor" stroke="none" transform="translate(-.7 -.6)"/></svg>',
     plus: '<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
     dots: '<svg viewBox="0 0 16 16"><circle cx="8" cy="3.2" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="12.8" r="1.5" fill="currentColor"/></svg>',
     minimize:
@@ -142,7 +142,7 @@
       '.mid{flex:1 1 auto;min-width:0;display:flex;align-items:center;align-self:stretch}' +
       '.title{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
       'display:flex;align-items:center;gap:6px;padding:0 6px;border-radius:7px;height:28px;' +
-      'color:#aebfcd;user-select:none;-webkit-user-select:none;cursor:move}' +
+      'color:#aebfcd;user-select:none;-webkit-user-select:none;cursor:grab}' +
       '.title:hover{background:rgba(255,255,255,.1)}' +
       '.title img{width:14px;height:14px;border-radius:3px}' +
       '.spacer{flex:1 1 auto;align-self:stretch;cursor:grab;min-width:24px}' +
