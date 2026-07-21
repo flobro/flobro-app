@@ -446,6 +446,13 @@ body {
 .footer .linklike:hover {
   text-decoration: underline;
 }
+/* the version label is a link to the changelog, but stays visually quiet */
+.footer .version {
+  color: var(--ink-soft);
+}
+.footer .version:hover {
+  color: var(--blue);
+}
 .linklike {
   all: unset;
   cursor: pointer;
