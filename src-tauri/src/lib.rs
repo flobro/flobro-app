@@ -59,10 +59,15 @@ async fn install_update(
     let Some(update) = update else {
         return Err("No pending update".into());
     };
-    update
+    if let Err(e) = update
         .download_and_install(|_chunk, _total| {}, || {})
         .await
-        .map_err(|e| e.to_string())?;
+    {
+        // e.g. a signature verification failure: worth knowing about
+        let msg = e.to_string();
+        track_error(&app, "update_install", &msg);
+        return Err(msg);
+    }
     // On Windows the installer has already exited the app; on macOS we
     // relaunch into the freshly installed version.
     app.restart();
@@ -116,12 +121,16 @@ async fn manual_update_check(app: AppHandle) {
                 return;
             }
             tauri::async_runtime::spawn(async move {
-                if update
+                match update
                     .download_and_install(|_chunk, _total| {}, || {})
                     .await
-                    .is_ok()
                 {
-                    handle.restart();
+                    Ok(()) => handle.restart(),
+                    Err(e) => {
+                        let msg = e.to_string();
+                        track_error(&handle, "update_install", &msg);
+                        handle.dialog().message(msg).title(title).show(|_| {});
+                    }
                 }
             });
         });
@@ -139,6 +148,29 @@ const POSTHOG_KEY: &str = "phc_tmfA5uemSD7TscmzLWQPAiqYXxfNartjfYsrjWQ6rEot";
 const POSTHOG_HOST: &str = "https://eu.i.posthog.com";
 
 fn track(app: &AppHandle, event: &str, hostname: Option<String>) {
+    let mut extra = serde_json::Map::new();
+    if let Some(host) = hostname {
+        extra.insert("hostname".into(), serde_json::Value::String(host));
+    }
+    track_props(app, event, extra);
+}
+
+/// Anonymous error reporting under the same rules as track(): opt-out
+/// respected, anonymous id, no page URLs, no IP. Messages are truncated so
+/// an error string can never drag much context along. Sent as PostHog's
+/// standard $exception event so reports show up under Error tracking, where
+/// alerts can notify us automatically.
+fn track_error(app: &AppHandle, context: &str, message: &str) {
+    let message: String = message.chars().take(300).collect();
+    let mut extra = serde_json::Map::new();
+    extra.insert(
+        "$exception_list".into(),
+        serde_json::json!([{ "type": context, "value": message }]),
+    );
+    track_props(app, "$exception", extra);
+}
+
+fn track_props(app: &AppHandle, event: &str, extra: serde_json::Map<String, serde_json::Value>) {
     let settings = load_settings(app);
     if !settings.share_usage || POSTHOG_KEY.contains("REPLACE_ME") {
         return;
@@ -153,8 +185,8 @@ fn track(app: &AppHandle, event: &str, hostname: Option<String>) {
             // system language: tells us which translations to add next
             "locale": sys_locale::get_locale().unwrap_or_else(|| "unknown".into()),
         });
-        if let Some(host) = hostname {
-            props["hostname"] = serde_json::Value::String(host);
+        for (key, value) in extra {
+            props[key.as_str()] = value;
         }
         let _ = ureq::post(&format!("{POSTHOG_HOST}/capture/"))
             .timeout(std::time::Duration::from_secs(5))
@@ -165,6 +197,14 @@ fn track(app: &AppHandle, event: &str, hostname: Option<String>) {
                 "properties": props,
             }));
     });
+}
+
+/// Launcher and settings windows report their uncaught errors through this
+/// command. Float windows deliberately cannot: their capability is shared
+/// with remote pages, and websites' errors are none of our business.
+#[tauri::command]
+fn report_error(app: AppHandle, context: String, message: String) {
+    track_error(&app, &context, &message);
 }
 
 /* ------------------------------- settings ------------------------------- */
@@ -629,7 +669,8 @@ pub fn run() {
             open_settings,
             show_launcher,
             check_update,
-            install_update
+            install_update,
+            report_error
         ])
         .setup(|app| {
             let handle = app.handle().clone();

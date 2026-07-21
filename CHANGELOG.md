@@ -12,9 +12,13 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
 ## [1.2.1] - 2026-07-21
 
+### Added
+
+- Anonymous error reporting: app failures are now reported to PostHog as long as user consented to analytics, with no personally identifiable information.
+
 ### Fixed
 
-- Updating from 1.1.0 failed with "The signature verification failed": two release builds ran in parallel for the v1.2.0 tag and uploaded mismatched binaries and signatures. Release builds are now serialized per tag and this release ships a consistent set
+- Updating from 1.1.0 failed with "The signature verification failed": two release builds ran in parallel for the v1.2.0 tag and uploaded mismatched binaries and signatures.
 
 ## [1.2.0] - 2026-07-21
 

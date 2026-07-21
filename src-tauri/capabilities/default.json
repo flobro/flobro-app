@@ -15,6 +15,7 @@
     "allow-open-settings",
     "allow-show-launcher",
     "allow-check-update",
-    "allow-install-update"
+    "allow-install-update",
+    "allow-report-error"
   ]
 }
