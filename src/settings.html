@@ -18,9 +18,11 @@
 
     <div class="content">
       <div class="field">
-        <label for="default-url" data-i18n="default_page">Default page</label>
+        <label for="default-url" data-i18n="default_page" class="settings-section">Default page</label>
         <input type="text" id="default-url" placeholder="https://status.example.com" spellcheck="false">
       </div>
+
+      <span class="settings-section" data-i18n="preferences">Preferences</span>
 
       <label class="toggle">
         <span class="txt"><span data-i18n="open_on_start">Open default page on launch</span>
@@ -37,30 +39,29 @@
       </label>
 
       <label class="toggle">
-        <span class="txt"><span data-i18n="remember_recent">Remember recent pages</span>
-          <small data-i18n="remember_recent_sub">Keeps your last 8 floated pages in the launcher.</small>
+        <span class="txt"><span data-i18n="remember_recent">Remember recently visited websites</span>
+          <small data-i18n="remember_recent_sub">Keeps your last 8 visits in the launcher.</small>
         </span>
         <input type="checkbox" id="remember-recent">
       </label>
 
       <label class="toggle" id="usage-toggle">
         <span class="txt"><span data-i18n="share_usage">Share anonymous usage stats</span>
-          <small data-i18n="share_usage_sub">Only the hostname of floated pages (like youtube.com). Never full URLs, never your IP.</small>
+          <small data-i18n="share_usage_sub">Only the hostname of floated pages (like flobro.app). Never full URLs,
+            never your IP.</small>
         </span>
         <span class="toggle-fx" id="usage-fx" aria-hidden="true"></span>
         <input type="checkbox" id="share-usage">
       </label>
 
       <div class="field">
-        <label for="language" data-i18n="language">Language</label>
+        <label for="language" data-i18n="language" class="settings-section">Language</label>
         <select id="language">
           <option value="auto" data-i18n="lang_auto">System language</option>
           <option value="en">English</option>
           <option value="nl">Nederlands</option>
         </select>
       </div>
-
-      <div class="status" id="status"></div>
 
       <div class="section-label" data-i18n="support">Support Flobro</div>
       <div class="sponsors">
