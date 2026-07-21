@@ -631,3 +631,13 @@ body {
   align-items: center;
   justify-content: space-between;
 }
+
+/* Manual update check: brief green "up to date" state of the banner */
+.update-banner.ok {
+  background: #e9f7ee;
+  color: #1d7a43;
+}
+.update-banner.ok .update-actions,
+.update-banner.ok .linklike {
+  display: none;
+}

@@ -38,7 +38,19 @@ async function save() {
   }, 1800);
 }
 
-$('#save').addEventListener('click', save);
+/* Save on change: no Save button. Toggles and the language select save
+ * immediately; the URL field saves on blur/Enter and while typing after a
+ * short pause. */
+let saveTimer = null;
+function saveSoon() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 600);
+}
+for (const id of ['open-on-start', 'stay-on-top', 'remember-recent', 'share-usage', 'language']) {
+  document.getElementById(id).addEventListener('change', save);
+}
+$('#default-url').addEventListener('change', save);
+$('#default-url').addEventListener('input', saveSoon);
 $('#close').addEventListener('click', () => appWindow.close());
 $('#feedback').addEventListener('click', () =>
   openUrl('https://github.com/flobro/flobro-app/issues'),

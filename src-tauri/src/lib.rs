@@ -1,7 +1,9 @@
 use std::fs;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
-use tauri::{AppHandle, Manager, PhysicalSize, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, Emitter, Manager, PhysicalSize, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+};
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_updater::UpdaterExt;
 
@@ -235,6 +237,33 @@ async fn open_float(app: AppHandle, url: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Opens an empty float window (the toolbar's and menu's "New window").
+/// Uses a local blank page so the float capability covers the toolbar IPC;
+/// double-clicking the title bar lets the user type a URL right away.
+#[tauri::command]
+async fn float_new(app: AppHandle) -> Result<(), String> {
+    let settings = load_settings(&app);
+    track(&app, "float_opened", None);
+
+    let n = FLOAT_COUNTER.fetch_add(1, Ordering::SeqCst);
+    let label = format!("float-{n}");
+
+    WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("blank.html".into()))
+        .title("Flobro")
+        .decorations(false)
+        .always_on_top(settings.stay_on_top)
+        .inner_size(560.0, 348.0)
+        .min_inner_size(170.0, 38.0)
+        .initialization_script(&TOOLBAR_JS.replace("__FLOBRO_LANG__", resolved_lang(&settings)))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    if let Some(launcher) = app.get_webview_window("launcher") {
+        let _ = launcher.hide();
+    }
+    Ok(())
+}
+
 #[tauri::command]
 fn float_pin(window: WebviewWindow, pinned: bool) -> Result<(), String> {
     window.set_always_on_top(pinned).map_err(|e| e.to_string())
@@ -292,7 +321,7 @@ async fn open_settings(app: AppHandle) -> Result<(), String> {
         .title("Flobro settings")
         .decorations(false)
         .transparent(true)
-        .inner_size(400.0, 700.0)
+        .inner_size(400.0, 650.0)
         .resizable(false)
         .always_on_top(true)
         .center()
@@ -334,24 +363,44 @@ fn handle_deep_link(app: &AppHandle, link: &str) {
 }
 
 /* ------------------------------ macOS menu ------------------------------
- * Native menu bar with the usual categories. Preferences (Cmd+,) opens the
- * settings window, File > New Float Window (Cmd+N) brings back the launcher,
- * View > Reload Page (Cmd+R) reloads the focused float. Labels follow the
- * app language (settings > Language, or the system language on auto). */
+ * Native menu bar with the usual categories, fully localized (the
+ * predefined items get explicit texts; their defaults are English and
+ * spell the app after the binary name). Preferences (Cmd+,) opens the
+ * settings window, File > New Float Window (Cmd+N) opens a blank float,
+ * View > Reload Page (Cmd+R) reloads the focused float. */
 #[cfg(target_os = "macos")]
 fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
-    use tauri::menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
-    let nl = lang == "nl";
-    let t = |en: &str, nl_str: &str| {
-        if nl {
-            nl_str.to_string()
-        } else {
-            en.to_string()
-        }
+    use tauri::menu::{
+        AboutMetadataBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder,
     };
+    let nl = lang == "nl";
+    let t = |en: &'static str, nl_str: &'static str| if nl { nl_str } else { en };
+
+    let version = env!("CARGO_PKG_VERSION");
+    let about_meta = AboutMetadataBuilder::new()
+        .name(Some("Flobro"))
+        .version(Some(version))
+        .icon(app.default_window_icon().cloned())
+        .website(Some(format!(
+            "https://github.com/flobro/flobro-app/releases/tag/v{version}"
+        )))
+        .website_label(Some(t("Changelog", "Wijzigingen")))
+        .build();
 
     let app_menu = SubmenuBuilder::new(app, "Flobro")
-        .about(Some(AboutMetadata::default()))
+        .item(&PredefinedMenuItem::about(
+            app,
+            Some(t("About Flobro", "Over Flobro")),
+            Some(about_meta),
+        )?)
+        .separator()
+        .item(
+            &MenuItemBuilder::with_id(
+                "check-updates",
+                t("Check for Updates\u{2026}", "Zoek naar updates\u{2026}"),
+            )
+            .build(app)?,
+        )
         .separator()
         .item(
             &MenuItemBuilder::with_id(
@@ -362,53 +411,86 @@ fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<t
             .build(app)?,
         )
         .separator()
-        .services()
+        .item(&PredefinedMenuItem::services(
+            app,
+            Some(t("Services", "Voorzieningen")),
+        )?)
         .separator()
-        .hide()
-        .hide_others()
-        .show_all()
+        .item(&PredefinedMenuItem::hide(
+            app,
+            Some(t("Hide Flobro", "Verberg Flobro")),
+        )?)
+        .item(&PredefinedMenuItem::hide_others(
+            app,
+            Some(t("Hide Others", "Verberg andere")),
+        )?)
+        .item(&PredefinedMenuItem::show_all(
+            app,
+            Some(t("Show All", "Toon alles")),
+        )?)
         .separator()
-        .quit()
+        .item(&PredefinedMenuItem::quit(
+            app,
+            Some(t("Quit Flobro", "Stop Flobro")),
+        )?)
         .build()?;
 
-    let file_menu = SubmenuBuilder::new(app, t("File", "Bestand"))
+    let file_menu = SubmenuBuilder::new(app, t("File", "Archief"))
         .item(
             &MenuItemBuilder::with_id("new-float", t("New Float Window", "Nieuw zwevend venster"))
                 .accelerator("Cmd+N")
                 .build(app)?,
         )
         .separator()
-        .close_window()
+        .item(&PredefinedMenuItem::close_window(
+            app,
+            Some(t("Close Window", "Sluit venster")),
+        )?)
         .build()?;
 
-    let edit_menu = SubmenuBuilder::new(app, t("Edit", "Wijzigen"))
-        .undo()
-        .redo()
+    let edit_menu = SubmenuBuilder::new(app, t("Edit", "Wijzig"))
+        .item(&PredefinedMenuItem::undo(app, Some(t("Undo", "Herstel")))?)
+        .item(&PredefinedMenuItem::redo(app, Some(t("Redo", "Opnieuw")))?)
         .separator()
-        .cut()
-        .copy()
-        .paste()
-        .select_all()
+        .item(&PredefinedMenuItem::cut(app, Some(t("Cut", "Knip")))?)
+        .item(&PredefinedMenuItem::copy(app, Some(t("Copy", "Kopieer")))?)
+        .item(&PredefinedMenuItem::paste(app, Some(t("Paste", "Plak")))?)
+        .item(&PredefinedMenuItem::select_all(
+            app,
+            Some(t("Select All", "Selecteer alles")),
+        )?)
         .build()?;
 
     let view_menu = SubmenuBuilder::new(app, t("View", "Weergave"))
         .item(
-            &MenuItemBuilder::with_id("reload-page", t("Reload Page", "Pagina vernieuwen"))
+            &MenuItemBuilder::with_id("reload-page", t("Reload Page", "Herlaad pagina"))
                 .accelerator("Cmd+R")
                 .build(app)?,
         )
         .build()?;
 
     let window_menu = SubmenuBuilder::new(app, t("Window", "Venster"))
-        .minimize()
-        .fullscreen()
+        .item(&PredefinedMenuItem::minimize(
+            app,
+            Some(t("Minimize", "Minimaliseer")),
+        )?)
+        .item(&PredefinedMenuItem::fullscreen(
+            app,
+            Some(t(
+                "Toggle Full Screen",
+                "Schakel schermvullende weergave in/uit",
+            )),
+        )?)
         .build()?;
 
     let help_menu = SubmenuBuilder::new(app, "Help")
+        .item(&MenuItemBuilder::with_id("flobro-help", t("Flobro Help", "Flobro-help")).build(app)?)
+        .item(&MenuItemBuilder::with_id("onboarding", "Onboarding").build(app)?)
         .item(
             &MenuItemBuilder::with_id("getting-started", t("Getting Started", "Aan de slag"))
                 .build(app)?,
         )
+        .separator()
         .item(&MenuItemBuilder::with_id("report-bug", t("Report a Bug", "Bug melden")).build(app)?)
         .build()?;
 
@@ -449,6 +531,7 @@ pub fn run() {
             get_settings,
             save_settings,
             open_float,
+            float_new,
             float_pin,
             float_zoom,
             float_aspect,
@@ -483,7 +566,23 @@ pub fn run() {
                     "new-float" => {
                         let handle = app.clone();
                         tauri::async_runtime::spawn(async move {
-                            let _ = show_launcher(handle).await;
+                            let _ = float_new(handle).await;
+                        });
+                    }
+                    "check-updates" => {
+                        // The banner UI lives in the launcher: bring it up and
+                        // let it run a manual check (with an "up to date" reply).
+                        let handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = show_launcher(handle.clone()).await;
+                            let _ = handle.emit_to("launcher", "flobro-check-updates", ());
+                        });
+                    }
+                    "onboarding" => {
+                        let handle = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = show_launcher(handle.clone()).await;
+                            let _ = handle.emit_to("launcher", "flobro-show-onboarding", ());
                         });
                     }
                     "reload-page" => {
@@ -493,6 +592,11 @@ pub fn run() {
                                 let _ = win.eval("location.reload()");
                             }
                         }
+                    }
+                    "flobro-help" => {
+                        let _ = app
+                            .opener()
+                            .open_url("https://github.com/flobro/flobro-app/wiki", None::<&str>);
                     }
                     "getting-started" => {
                         let _ = app.opener().open_url(
