@@ -102,13 +102,15 @@
       '<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/><path d="M13 1.8v3h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     aspect:
       '<svg viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
-    pin: '<svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z" fill="currentColor" stroke="none"/></svg>',
+    pin: '<svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z" fill="currentColor" stroke="none" transform="translate(-.7 .4)"/></svg>',
     plus: '<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
     dots: '<svg viewBox="0 0 16 16"><circle cx="8" cy="3.2" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="12.8" r="1.5" fill="currentColor"/></svg>',
     minimize:
       '<svg viewBox="0 0 16 16"><path d="M3 12h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
     settings:
-      '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 1.6l.9 1.9 2-.6 1.4 1.4-.6 2 1.9.9v2l-1.9.9.6 2-1.4 1.4-2-.6-.9 1.9h-2l-.9-1.9-2 .6-1.4-1.4.6-2-1.9-.9v-2l1.9-.9-.6-2 1.4-1.4 2 .6.9-1.9z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none" transform="scale(.92) translate(.7 .7)"/></svg>',
+      /* The gear path's own bounding box is centered on (7, 8.2), so the
+       * transform recenters it on (8, 8) to line up with the inner circle. */
+      '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 1.6l.9 1.9 2-.6 1.4 1.4-.6 2 1.9.9v2l-1.9.9.6 2-1.4 1.4-2-.6-.9 1.9h-2l-.9-1.9-2 .6-1.4-1.4.6-2-1.9-.9v-2l1.9-.9-.6-2 1.4-1.4 2 .6.9-1.9z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none" transform="translate(8 8) scale(.92) translate(-7 -8.2)"/></svg>',
     close:
       '<svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
   };
@@ -151,7 +153,10 @@
       'button.mn.open{background:rgba(255,255,255,.14)}' +
       'button svg{width:15px;height:15px;display:block}' +
       /* Chromium-style dropdown menu */
+      /* The menu is a sibling of .bar, so it needs its own font: with
+       * :host{all:initial} it would otherwise fall back to serif. */
       '.menu{position:fixed;top:40px;min-width:200px;padding:6px;border-radius:12px;display:none;' +
+      'font:12px/1 -apple-system,"Segoe UI",system-ui,sans-serif;color:#dfe9f2;' +
       'background:rgba(30,39,48,.98);backdrop-filter:blur(14px);box-shadow:0 10px 34px rgba(0,0,0,.45);' +
       'border:1px solid rgba(255,255,255,.09)}' +
       '.menu.open{display:block}' +
