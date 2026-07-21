@@ -19,7 +19,7 @@
     <div class="content">
       <div class="field">
         <label for="default-url" data-i18n="default_page">Default page</label>
-        <input type="text" id="default-url" placeholder="https://www.youtube.com" spellcheck="false">
+        <input type="text" id="default-url" placeholder="https://status.example.com" spellcheck="false">
       </div>
 
       <label class="toggle">
@@ -51,6 +51,15 @@
         <input type="checkbox" id="share-usage">
       </label>
 
+      <div class="field">
+        <label for="language" data-i18n="language">Language</label>
+        <select id="language">
+          <option value="auto" data-i18n="lang_auto">System language</option>
+          <option value="en">English</option>
+          <option value="nl">Nederlands</option>
+        </select>
+      </div>
+
       <button type="button" class="btn block" id="save" data-i18n="save">Save</button>
       <div class="status" id="status"></div>
 
@@ -62,8 +71,7 @@
     </div>
 
     <div class="footer">
-      <button type="button" class="linklike" id="clear-recent" data-i18n="clear_recent">Clear recent</button>
-      <button type="button" class="linklike" id="website">flobro.app</button>
+      <button type="button" class="linklike" id="feedback" data-i18n="feedback">Share feedback</button>
     </div>
   </div>
   <script src="i18n.js"></script>
