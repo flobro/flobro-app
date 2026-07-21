@@ -13,6 +13,7 @@
     "allow-float-aspect",
     "allow-float-minimize",
     "allow-float-close",
-    "allow-open-settings"
+    "allow-open-settings",
+    "allow-show-launcher"
   ]
 }
