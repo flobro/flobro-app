@@ -6,6 +6,13 @@ on:
       - "v*"
   workflow_dispatch:
 
+# Never build the same tag twice in parallel: concurrent runs interleave
+# their asset uploads into one draft, leaving latest.json with signatures
+# that do not match the uploaded binaries (the v1.2.0 updater breakage).
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     permissions:
