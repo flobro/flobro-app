@@ -13,6 +13,7 @@ window.FLOBRO_I18N = (function () {
       hero_sub:
         'Paste a link, get a distraction-free window that stays on top. Dashboards, chats, docs, video: anything with a URL.',
       url_placeholder: 'Paste or type any link…',
+      url_invalid: 'Only http and https links can float',
       float_btn: 'Float',
       recent: 'Recent',
       recent_empty: 'Nothing floated yet.',
@@ -70,6 +71,7 @@ window.FLOBRO_I18N = (function () {
       hero_sub:
         'Plak een link en krijg een afleidingsvrij venster dat altijd bovenaan blijft. Dashboards, chats, documenten, video: alles met een URL.',
       url_placeholder: 'Plak of typ een link…',
+      url_invalid: 'Alleen http- en https-links kunnen floaten',
       float_btn: 'Float',
       recent: 'Recent',
       recent_empty: 'Nog niets gefloat.',

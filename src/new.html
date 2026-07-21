@@ -81,7 +81,22 @@
       let v = input.value.trim();
       if (!v) return;
       if (!v.includes('://')) v = 'https://' + v;
-      location.href = v;
+      /* mirror the Rust normalize_url: only http(s) may navigate; this page
+       * runs in the privileged app origin, so javascript:, data: and other
+       * schemes must never reach location.href */
+      let url = null;
+      try {
+        url = new URL(v);
+      } catch {
+        /* not a URL */
+      }
+      if (!url || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
+        input.setCustomValidity(window.FLOBRO_I18N.t('url_invalid'));
+        input.reportValidity();
+        setTimeout(() => input.setCustomValidity(''), 2500);
+        return;
+      }
+      location.href = url.href;
     });
   </script>
 </body>

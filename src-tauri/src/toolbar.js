@@ -381,8 +381,18 @@
       var v = urlbox.value.trim();
       if (!v) return closeUrlEdit();
       if (v.indexOf('://') === -1) v = 'https://' + v;
+      /* Only http(s) may navigate, mirroring the Rust normalize_url;
+       * javascript:, data: and other schemes must never run from here.
+       * The editor stays open so the user can correct the input. */
+      var url = null;
+      try {
+        url = new URL(v);
+      } catch {
+        /* not a URL */
+      }
+      if (!url || (url.protocol !== 'http:' && url.protocol !== 'https:')) return;
       closeUrlEdit();
-      if (v !== location.href) location.href = v;
+      if (url.href !== location.href) location.href = url.href;
     });
     urlbox.addEventListener('blur', closeUrlEdit);
 
