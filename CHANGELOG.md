@@ -10,6 +10,30 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-21
+
+### Added
+
+- Native macOS menu bar, fully localized: Preferences (Cmd+,), New Float Window (Cmd+N), Reload Page (Cmd+R), Check for Updates, Help links and a replayable onboarding tour
+- Zoom In, Zoom Out and Actual Size (Cmd+=, Cmd+-, Cmd+0) plus Snap to 16:9 in the View menu, acting on the focused float window and kept in sync with the toolbar
+- New float windows open a new-tab page with a large, auto-focused address bar: type or paste a link and press Enter
+- A first-run onboarding tour in three short steps, with back navigation
+- The version label in the launcher footer opens the changelog of the installed version
+
+### Changed
+
+- Check for Updates now answers in a native dialog and can install the update right from there, whichever window is focused
+- The hover toolbar groups zoom, 16:9 snap, new window and settings in a dropdown menu, and follows the app language setting
+- The launcher and settings screens are organized into clearer sections
+- Clearer onboarding illustrations
+- The About window shows a sharp app icon
+
+### Fixed
+
+- The toolbar pin and gear icons are optically centered and the dropdown menu uses the system font instead of a serif fallback
+- The title bar and the drag area share the same grab cursor
+- Float windows are granted the new-window command through the ACL
+
 ## [1.1.0] - 2026-07-17
 
 ### Added
@@ -47,7 +71,8 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 - Privacy-friendly, hostname-only usage stats via PostHog EU with opt-out
 - Signed and notarized macOS builds plus Windows NSIS installer via GitHub Actions
 
-[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/flobro/flobro-app/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/flobro/flobro-app/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/flobro/flobro-app/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/flobro/flobro-app/releases/tag/v1.0.0
