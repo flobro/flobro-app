@@ -18,6 +18,7 @@ fn main() {
             "show_launcher",
             "check_update",
             "install_update",
+            "report_error",
         ]),
     ))
     .expect("failed to run tauri-build");
