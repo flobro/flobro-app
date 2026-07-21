@@ -439,7 +439,6 @@ fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<t
     let t = |en: &'static str, nl_str: &'static str| if nl { nl_str } else { en };
 
     let version = env!("CARGO_PKG_VERSION");
-    let changelog_url = format!("https://github.com/flobro/flobro-app/releases/tag/v{version}");
     // The About panel renders the icon at roughly 64pt, so feed it the 256px
     // asset; the default window icon is too small and shows up blurry.
     let about_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/128x128@2x.png"))
@@ -449,14 +448,12 @@ fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<t
         .name(Some("Flobro"))
         .version(Some(version))
         .icon(about_icon)
-        // macOS ignores website/website_label in the native About panel, so
-        // the changelog URL also goes into the credits text, which macOS does
-        // render. website is kept for any future non-macOS menu use.
-        .credits(Some(format!(
-            "{}:\n{changelog_url}",
-            t("Changelog", "Wijzigingen")
+        // macOS ignores website/website_label in the native About panel; the
+        // launcher's version label links to the changelog instead. website is
+        // kept for any future non-macOS menu use.
+        .website(Some(format!(
+            "https://github.com/flobro/flobro-app/releases/tag/v{version}"
         )))
-        .website(Some(changelog_url.clone()))
         .website_label(Some(t("Changelog", "Wijzigingen")))
         .build();
 

@@ -63,6 +63,12 @@ $('#settings').addEventListener('click', () => invoke('open_settings'));
 $('#feedback').addEventListener('click', () =>
   window.__TAURI__.opener.openUrl('https://github.com/flobro/flobro-app/issues'),
 );
+/* the version label doubles as a changelog link (the native About panel
+ * on macOS cannot show one) */
+$('#version').addEventListener('click', async () => {
+  const version = await window.__TAURI__.app.getVersion();
+  window.__TAURI__.opener.openUrl(`https://github.com/flobro/flobro-app/releases/tag/v${version}`);
+});
 $('#clear-recent').addEventListener('click', async () => {
   const settings = await invoke('get_settings');
   settings.recent = [];
