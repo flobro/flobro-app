@@ -8,6 +8,7 @@ fn main() {
             "get_settings",
             "save_settings",
             "open_float",
+            "float_new",
             "float_pin",
             "float_zoom",
             "float_aspect",
