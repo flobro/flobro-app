@@ -31,11 +31,6 @@ async function save() {
   await invoke('save_settings', { settings });
   window.FLOBRO_I18N.setLang(settings.language);
   emit('flobro-language', settings.language);
-  const status = $('#status');
-  status.textContent = t('saved');
-  setTimeout(() => {
-    status.textContent = '';
-  }, 1800);
 }
 
 /* Save on change: no Save button. Toggles and the language select save

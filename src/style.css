@@ -384,10 +384,6 @@ body {
   flex-direction: column;
   gap: 6px;
 }
-.field label {
-  font-size: 12.5px;
-  font-weight: 600;
-}
 .field input[type="text"] {
   padding: 10px 12px;
   border: 1.5px solid var(--line);
@@ -400,6 +396,11 @@ body {
 }
 .field input[type="text"]:focus {
   border-color: var(--blue);
+}
+
+.settings-section {
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
 .toggle {
@@ -509,6 +510,12 @@ body {
 }
 
 /* ---------- sponsor buttons ---------- */
+/* target a .section-label that is followed by .sponsors */
+.section-label:has(+ .sponsors) {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
 .sponsors {
   display: flex;
   gap: 8px;

@@ -321,7 +321,7 @@ async fn open_settings(app: AppHandle) -> Result<(), String> {
         .title("Flobro settings")
         .decorations(false)
         .transparent(true)
-        .inner_size(400.0, 650.0)
+        .inner_size(400.0, 700.0)
         .resizable(false)
         .always_on_top(true)
         .center()
