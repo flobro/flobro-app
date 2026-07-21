@@ -60,6 +60,7 @@ window.FLOBRO_I18N = (function () {
       ob_body_3:
         'Pin or unpin per window, open as many floats as you like, and set a default page in Settings.',
       ob_skip: 'Skip',
+      ob_prev: 'Back',
       ob_next: 'Next',
       ob_done: 'Get started',
     },
@@ -115,6 +116,7 @@ window.FLOBRO_I18N = (function () {
       ob_body_3:
         'Pin of ontpin per venster, open zoveel floats als je wilt en stel een standaardpagina in via Instellingen.',
       ob_skip: 'Overslaan',
+      ob_prev: 'Terug',
       ob_next: 'Volgende',
       ob_done: 'Aan de slag',
     },

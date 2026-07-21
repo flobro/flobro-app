@@ -255,12 +255,14 @@ checkForUpdate();
  * Shown once; skipping counts as done. */
 const OB_KEY = 'flobro-onboarded';
 const OB_ART = [
-  /* step 1: link into a floating window */
-  '<svg viewBox="0 0 200 90"><rect x="18" y="34" width="96" height="22" rx="6" fill="none" stroke="#248BD2" stroke-width="3"/><path d="M120 45h26" stroke="#248BD2" stroke-width="3" stroke-linecap="round"/><path d="M140 38l8 7-8 7" fill="none" stroke="#248BD2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="152" y="22" width="42" height="34" rx="8" fill="#248BD2"/><rect x="142" y="34" width="42" height="34" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".35" stroke-width="3"/></svg>',
-  /* step 2: hover top edge reveals toolbar */
-  '<svg viewBox="0 0 200 90"><rect x="40" y="14" width="120" height="66" rx="9" fill="none" stroke="#248BD2" stroke-width="3"/><rect x="40" y="14" width="120" height="16" rx="8" fill="#248BD2"/><circle cx="54" cy="22" r="2.6" fill="#fff"/><circle cx="64" cy="22" r="2.6" fill="#fff"/><circle cx="74" cy="22" r="2.6" fill="#fff"/><path d="M100 52l0 16m0-16l-5 5m5-5l5 5" stroke="#248BD2" stroke-width="3" stroke-linecap="round" fill="none" transform="rotate(180 100 60)"/></svg>',
-  /* step 3: pin + multiple windows */
-  '<svg viewBox="0 0 200 90"><rect x="26" y="30" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".35" stroke-width="3"/><rect x="58" y="16" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".6" stroke-width="3"/><rect x="110" y="30" width="64" height="44" rx="8" fill="#248BD2"/><path d="M150 40l10 10-5.5 1.5-6.5 6.5.8 8-5-5-7 7-2.5-2.5 7-7-5-5 8 .8 6.5-6.5z" fill="#fff"/></svg>',
+  /* step 1: a generic website flows into the Flobro app icon; the arrow
+   * keeps clear margins on both sides */
+  '<svg viewBox="0 0 200 90"><rect x="14" y="12" width="84" height="66" rx="8" fill="none" stroke="#248BD2" stroke-width="3"/><path d="M14 29h84" stroke="#248BD2" stroke-width="3"/><circle cx="24" cy="20.5" r="2.6" fill="#248BD2"/><circle cx="33" cy="20.5" r="2.6" fill="#248BD2"/><rect x="24" y="39" width="64" height="7" rx="3.5" fill="#248BD2" fill-opacity=".3"/><rect x="24" y="52" width="46" height="7" rx="3.5" fill="#248BD2" fill-opacity=".3"/><rect x="24" y="65" width="56" height="7" rx="3.5" fill="#248BD2" fill-opacity=".3"/><path d="M108 45h22" stroke="#248BD2" stroke-width="3" stroke-linecap="round"/><path d="M124 38l8 7-8 7" fill="none" stroke="#248BD2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="144" y="36" width="40" height="31" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".35" stroke-width="3"/><rect x="156" y="24" width="40" height="31" rx="8" fill="#248BD2"/></svg>',
+  /* step 2: arrow points up at the top bar the text talks about */
+  '<svg viewBox="0 0 200 90"><rect x="40" y="14" width="120" height="66" rx="9" fill="none" stroke="#248BD2" stroke-width="3"/><rect x="40" y="14" width="120" height="16" rx="8" fill="#248BD2"/><circle cx="54" cy="22" r="2.6" fill="#fff"/><circle cx="64" cy="22" r="2.6" fill="#fff"/><circle cx="74" cy="22" r="2.6" fill="#fff"/><path d="M100 68V46l-6 6m6-6l6 6" fill="none" stroke="#248BD2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  /* step 3: pin + multiple windows; the transform centers the pin glyph
+   * on the filled window (its raw bounding box sits at 147.2, 54) */
+  '<svg viewBox="0 0 200 90"><rect x="26" y="30" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".35" stroke-width="3"/><rect x="58" y="16" width="64" height="44" rx="8" fill="none" stroke="#248BD2" stroke-opacity=".6" stroke-width="3"/><rect x="110" y="30" width="64" height="44" rx="8" fill="#248BD2"/><path d="M150 40l10 10-5.5 1.5-6.5 6.5.8 8-5-5-7 7-2.5-2.5 7-7-5-5 8 .8 6.5-6.5z" fill="#fff" transform="translate(-5.2 -2)"/></svg>',
 ];
 
 let obStep = 0;
@@ -272,6 +274,8 @@ function obRender() {
   $('#ob-title').textContent = t(`ob_title_${obStep + 1}`);
   $('#ob-body').textContent = t(`ob_body_${obStep + 1}`);
   $('#ob-next').textContent = obStep === OB_ART.length - 1 ? t('ob_done') : t('ob_next');
+  /* the left button skips on the first step and goes back afterwards */
+  $('#ob-skip').textContent = obStep === 0 ? t('ob_skip') : t('ob_prev');
   $('#ob-dots').innerHTML = OB_ART.map(
     (_, i) => `<span class="ob-dot${i === obStep ? ' on' : ''}"></span>`,
   ).join('');
@@ -297,7 +301,11 @@ function startOnboarding(force) {
   obStep = 0;
   if (!obBound) {
     obBound = true;
-    $('#ob-skip').addEventListener('click', obFinish);
+    $('#ob-skip').addEventListener('click', () => {
+      if (obStep === 0) return obFinish();
+      obStep--;
+      obRender();
+    });
     $('#ob-next').addEventListener('click', () => {
       if (obStep === OB_ART.length - 1) return obFinish();
       obStep++;
