@@ -299,8 +299,8 @@ async fn open_float(app: AppHandle, url: String) -> Result<(), String> {
 }
 
 /// Opens an empty float window (the toolbar's and menu's "New window").
-/// Uses a local blank page so the float capability covers the toolbar IPC;
-/// double-clicking the title bar lets the user type a URL right away.
+/// Uses the local new-tab page so the float capability covers the toolbar
+/// IPC; its hero address bar lets the user type a URL right away.
 #[tauri::command]
 async fn float_new(app: AppHandle) -> Result<(), String> {
     let settings = load_settings(&app);
@@ -309,7 +309,7 @@ async fn float_new(app: AppHandle) -> Result<(), String> {
     let n = FLOAT_COUNTER.fetch_add(1, Ordering::SeqCst);
     let label = format!("float-{n}");
 
-    WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("blank.html".into()))
+    WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("new.html".into()))
         .title("Flobro")
         .decorations(false)
         .always_on_top(settings.stay_on_top)

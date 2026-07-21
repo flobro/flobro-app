@@ -33,6 +33,7 @@
       settings: 'Settings',
       close: 'Close',
       drag: 'Drag to move, double-click to edit the URL',
+      dragOnly: 'Drag to move',
     },
     nl: {
       zoom: 'Zoom',
@@ -48,6 +49,7 @@
       settings: 'Instellingen',
       close: 'Sluiten',
       drag: 'Sleep om te verplaatsen, dubbelklik om de URL te wijzigen',
+      dragOnly: 'Sleep om te verplaatsen',
     },
   };
   // The app replaces __FLOBRO_LANG__ with the language from settings; if the
@@ -57,6 +59,12 @@
     langPref = (navigator.language || 'en').toLowerCase().indexOf('nl') === 0 ? 'nl' : 'en';
   }
   var L = I18N[langPref];
+
+  /* The local new-tab page has its own hero address bar, so the titlebar's
+   * double-click URL editor is disabled there to avoid two competing inputs. */
+  var isNewTabPage =
+    (location.protocol === 'tauri:' || location.hostname === 'tauri.localhost') &&
+    /\/new\.html$/.test(location.pathname);
 
   function invoke(cmd, args) {
     /* Remote pages don't always get the __TAURI__ global bundle; the
@@ -219,7 +227,7 @@
       var mid =
         '<span class="mid">' +
         '<span class="title" title="' +
-        L.drag +
+        (isNewTabPage ? L.dragOnly : L.drag) +
         '"><img alt="" hidden><span class="text"></span></span>' +
         '<span class="spacer"></span>' +
         '<input class="urlbox" type="text" spellcheck="false">' +
@@ -401,7 +409,7 @@
     title.addEventListener('mousedown', onPress);
     title.addEventListener('mousemove', onMove);
     title.addEventListener('mouseup', onRelease);
-    title.addEventListener('dblclick', openUrlEdit);
+    if (!isNewTabPage) title.addEventListener('dblclick', openUrlEdit);
     /* the empty spacer is a pure drag surface, like before */
     $('.spacer').addEventListener('mousedown', function (e) {
       if (e.button === 0) startDrag();
