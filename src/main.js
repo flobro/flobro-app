@@ -74,8 +74,7 @@ $('#clear-recent').addEventListener('click', async () => {
 window.__TAURI__.event.listen('flobro-language', (e) => {
   window.FLOBRO_I18N.setLang(e.payload);
 });
-/* macOS menu: manual update check and onboarding replay */
-window.__TAURI__.event.listen('flobro-check-updates', () => checkForUpdate(true));
+/* macOS menu: onboarding replay */
 window.__TAURI__.event.listen('flobro-show-onboarding', () => startOnboarding(true));
 $('#min').addEventListener('click', () => appWindow.minimize());
 $('#close').addEventListener('click', () => appWindow.close());
@@ -165,8 +164,8 @@ $('#notes-modal').addEventListener('click', (e) => {
 const PENDING_UPDATE_KEY = 'flobro-pending-update';
 
 /* Update check: silent on launch, banner only when something is available.
- * Nothing downloads until the user clicks "Update now". A manual check
- * (macOS menu > Check for Updates) also reports "up to date". */
+ * Nothing downloads until the user clicks "Update now". Manual checks
+ * (macOS menu > Check for Updates) are handled in Rust with a native dialog. */
 let updateBound = false;
 let updateInfo = null;
 
@@ -206,7 +205,7 @@ function bindUpdateBanner() {
   });
 }
 
-async function checkForUpdate(manual) {
+async function checkForUpdate() {
   bindUpdateBanner();
   const banner = $('#update-banner');
   const detail = $('#update-detail');
@@ -217,21 +216,7 @@ async function checkForUpdate(manual) {
   } catch {
     info = null; /* offline or updater not configured */
   }
-  if (!info) {
-    if (manual) {
-      /* reuse the banner as a short "all good" note */
-      banner.classList.add('ok');
-      $('#update-banner strong').textContent = t('up_to_date');
-      detail.textContent = '';
-      banner.hidden = false;
-      setTimeout(() => {
-        banner.hidden = true;
-        banner.classList.remove('ok');
-        $('#update-banner strong').textContent = t('update_title');
-      }, 3000);
-    }
-    return;
-  }
+  if (!info) return;
   updateInfo = info;
   $('#update-banner strong').textContent = t('update_title');
   detail.textContent = t('update_detail').replace('{version}', info.version);

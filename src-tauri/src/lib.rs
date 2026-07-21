@@ -15,7 +15,9 @@ static FLOAT_COUNTER: AtomicU32 = AtomicU32::new(0);
  * and installs after the user clicks "Update now". Update authenticity is
  * verified with a dedicated Tauri signing key (separate from the Apple and
  * Windows code-signing certificates); with the placeholder public key in
- * tauri.conf.json the check simply fails quietly and no banner appears. */
+ * tauri.conf.json the check simply fails quietly and no banner appears.
+ * Manual checks (macOS menu > Check for Updates) report through a native
+ * dialog instead, so the answer shows up no matter which window is open. */
 #[derive(Default)]
 struct PendingUpdate(Mutex<Option<tauri_plugin_updater::Update>>);
 
@@ -64,6 +66,65 @@ async fn install_update(
     // On Windows the installer has already exited the app; on macOS we
     // relaunch into the freshly installed version.
     app.restart();
+}
+
+/// Manual "Check for Updates" from the menu. The result lands in a native
+/// dialog: from a float window a launcher banner would be invisible or force
+/// the launcher to the front, which is annoying mid-browse.
+#[cfg(target_os = "macos")]
+async fn manual_update_check(app: AppHandle) {
+    use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+
+    let settings = load_settings(&app);
+    let nl = resolved_lang(&settings) == "nl";
+    let title = if nl {
+        "Zoek naar updates"
+    } else {
+        "Check for Updates"
+    };
+    let found = match app.updater() {
+        Ok(updater) => updater.check().await.ok().flatten(),
+        Err(_) => None,
+    };
+    // Any failure counts as "no update", matching the silent launch check.
+    let Some(update) = found else {
+        app.dialog()
+            .message(if nl {
+                "Je gebruikt de nieuwste versie."
+            } else {
+                "You are on the latest version."
+            })
+            .title(title)
+            .show(|_| {});
+        return;
+    };
+    let message = if nl {
+        format!("Versie {} staat klaar. Nu bijwerken?", update.version)
+    } else {
+        format!("Version {} is ready. Update now?", update.version)
+    };
+    let handle = app.clone();
+    app.dialog()
+        .message(message)
+        .title(title)
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            (if nl { "Nu bijwerken" } else { "Update now" }).into(),
+            "Later".into(),
+        ))
+        .show(move |confirmed| {
+            if !confirmed {
+                return;
+            }
+            tauri::async_runtime::spawn(async move {
+                if update
+                    .download_and_install(|_chunk, _total| {}, || {})
+                    .await
+                    .is_ok()
+                {
+                    handle.restart();
+                }
+            });
+        });
 }
 
 const TOOLBAR_JS: &str = include_str!("toolbar.js");
@@ -537,6 +598,7 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
         .manage(PendingUpdate::default())
         .invoke_handler(tauri::generate_handler![
             get_settings,
@@ -581,13 +643,7 @@ pub fn run() {
                         });
                     }
                     "check-updates" => {
-                        // The banner UI lives in the launcher: bring it up and
-                        // let it run a manual check (with an "up to date" reply).
-                        let handle = app.clone();
-                        tauri::async_runtime::spawn(async move {
-                            let _ = show_launcher(handle.clone()).await;
-                            let _ = handle.emit_to("launcher", "flobro-check-updates", ());
-                        });
+                        tauri::async_runtime::spawn(manual_update_check(app.clone()));
                     }
                     "onboarding" => {
                         let handle = app.clone();
