@@ -19,6 +19,12 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
+      # Mac and Windows both read-modify-write the same latest.json release
+      # asset (tauri-action merges this platform's entries into whatever is
+      # currently published). Running them in parallel races that read-modify
+      # -write and drops or staleifies whichever platform's write loses, e.g.
+      # v1.2.1 shipped with a stale darwin signature this way. Serialize them.
+      max-parallel: 1
       matrix:
         include:
           - platform: macos-latest
