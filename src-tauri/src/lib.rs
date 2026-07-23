@@ -145,7 +145,7 @@ const TOOLBAR_JS: &str = include_str!("toolbar.js");
  * - Fully disabled through the "Share anonymous usage stats" setting.
  */
 const POSTHOG_KEY: &str = "phc_tmfA5uemSD7TscmzLWQPAiqYXxfNartjfYsrjWQ6rEot";
-const POSTHOG_HOST: &str = "https://eu.i.posthog.com";
+const POSTHOG_HOST: &str = "https://s.flobro.app";
 
 fn track(app: &AppHandle, event: &str, hostname: Option<String>) {
     let mut extra = serde_json::Map::new();
