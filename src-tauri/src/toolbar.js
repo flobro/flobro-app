@@ -473,6 +473,19 @@
     });
 
     document.documentElement.appendChild(host);
+
+    /* Some single-page apps (YouTube, and typical local dev servers with
+     * hot-reload) wholesale-replace document.documentElement's children on
+     * route changes or reloads-in-place, which silently detaches the
+     * toolbar host with nothing to bring it back. Since float windows have
+     * no OS titlebar, losing the host also means losing the only way to
+     * drag or close the window. Watch for that and re-attach immediately
+     * rather than only guarding against double-injection. */
+    new MutationObserver(function () {
+      if (!host.isConnected && document.documentElement) {
+        document.documentElement.appendChild(host);
+      }
+    }).observe(document.documentElement, { childList: true });
   }
 
   if (document.readyState === 'loading') {
