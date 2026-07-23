@@ -99,6 +99,43 @@
     }
   }
 
+  /* target="_blank" links and window.open() calls do nothing by default in
+   * a Tauri webview: there is no built-in new-window handling. Route both
+   * to a new float window instead (reusing the existing open_float
+   * command), which also covers OAuth/sign-in popups (Google's sign-in
+   * flow, for one, is a window.open() call). This is patched here, at
+   * script-injection time and outside build(), so it runs before any of
+   * the page's own scripts get a chance to run and cache a reference to
+   * the original window.open. Full tabbed UI within a single window is a
+   * separate, larger piece of work tracked on its own; this only makes
+   * "open a new window" requests do something instead of nothing. */
+  function openInNewFloat(url) {
+    if (!url) return;
+    invoke('open_float', { url: String(url) });
+  }
+
+  window.open = function (url) {
+    if (url) openInNewFloat(url);
+    return null;
+  };
+
+  document.addEventListener(
+    'click',
+    function (e) {
+      if (e.defaultPrevented || e.button !== 0) return;
+      var el = e.target;
+      while (el && el !== document) {
+        if (el.tagName === 'A' && el.target === '_blank' && el.href) {
+          e.preventDefault();
+          openInNewFloat(el.href);
+          return;
+        }
+        el = el.parentNode;
+      }
+    },
+    true,
+  );
+
   var ICONS = {
     zoomOut:
       '<svg viewBox="0 0 16 16"><path d="M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
