@@ -14,7 +14,8 @@
     "allow-float-minimize",
     "allow-float-close",
     "allow-open-settings",
-    "allow-float-new"
+    "allow-float-new",
+    "allow-open-float"
   ],
   "local": true
 }
