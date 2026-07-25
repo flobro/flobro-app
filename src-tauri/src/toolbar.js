@@ -144,29 +144,149 @@
     true,
   );
 
+  /* The toolbar is built with DOM calls, never from an HTML string: pages
+   * that send `require-trusted-types-for 'script'` (YouTube does) make every
+   * HTML-string sink throw - innerHTML, insertAdjacentHTML and DOMParser
+   * alike - which used to abort build() before the host was ever appended,
+   * leaving the window with no titlebar at all. So the icons are shape data
+   * instead of markup. Everything is stroked in the current colour unless
+   * the shape says otherwise. */
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var SHAPE_DEFAULTS = { fill: 'none', stroke: 'currentColor', 'stroke-linecap': 'round' };
+
   var ICONS = {
-    zoomOut:
-      '<svg viewBox="0 0 16 16"><path d="M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
-    zoomIn:
-      '<svg viewBox="0 0 16 16"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
-    zoomReset:
-      '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.2" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/></svg>',
-    refresh:
-      '<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/><path d="M13 1.8v3h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    aspect:
-      '<svg viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="1.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
-    pin: '<svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z" fill="currentColor" stroke="none" transform="translate(-.7 -.6)"/></svg>',
-    plus: '<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
-    dots: '<svg viewBox="0 0 16 16"><circle cx="8" cy="3.2" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="12.8" r="1.5" fill="currentColor"/></svg>',
-    minimize:
-      '<svg viewBox="0 0 16 16"><path d="M3 12h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
-    settings:
-      /* The gear path's own bounding box is centered on (7, 8.2), so the
-       * transform recenters it on (8, 8) to line up with the inner circle. */
-      '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 1.6l.9 1.9 2-.6 1.4 1.4-.6 2 1.9.9v2l-1.9.9.6 2-1.4 1.4-2-.6-.9 1.9h-2l-.9-1.9-2 .6-1.4-1.4.6-2-1.9-.9v-2l1.9-.9-.6-2 1.4-1.4 2 .6.9-1.9z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none" transform="translate(8 8) scale(.92) translate(-7 -8.2)"/></svg>',
-    close:
-      '<svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
+    zoomOut: [['path', { d: 'M3 8h10', 'stroke-width': '1.8' }]],
+    zoomIn: [['path', { d: 'M3 8h10M8 3v10', 'stroke-width': '1.8' }]],
+    zoomReset: [
+      ['circle', { cx: '8', cy: '8', r: '5.2', 'stroke-width': '1.6' }],
+      ['circle', { cx: '8', cy: '8', r: '1.6', fill: 'currentColor', stroke: 'none' }],
+    ],
+    refresh: [
+      ['path', { d: 'M13 8a5 5 0 1 1-1.5-3.6', 'stroke-width': '1.7' }],
+      ['path', { d: 'M13 1.8v3h-3', 'stroke-width': '1.7', 'stroke-linejoin': 'round' }],
+    ],
+    aspect: [
+      ['rect', { x: '2', y: '4', width: '12', height: '8', rx: '1.5', 'stroke-width': '1.6' }],
+    ],
+    pin: [
+      [
+        'path',
+        {
+          d: 'M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z',
+          fill: 'currentColor',
+          stroke: 'none',
+          transform: 'translate(-.7 -.6)',
+        },
+      ],
+    ],
+    plus: [['path', { d: 'M8 3v10M3 8h10', 'stroke-width': '1.8' }]],
+    dots: [
+      ['circle', { cx: '8', cy: '3.2', r: '1.5', fill: 'currentColor', stroke: 'none' }],
+      ['circle', { cx: '8', cy: '8', r: '1.5', fill: 'currentColor', stroke: 'none' }],
+      ['circle', { cx: '8', cy: '12.8', r: '1.5', fill: 'currentColor', stroke: 'none' }],
+    ],
+    minimize: [['path', { d: 'M3 12h10', 'stroke-width': '1.8' }]],
+    settings: [
+      ['circle', { cx: '8', cy: '8', r: '2', 'stroke-width': '1.5' }],
+      [
+        'path',
+        {
+          d: 'M8 1.6l.9 1.9 2-.6 1.4 1.4-.6 2 1.9.9v2l-1.9.9.6 2-1.4 1.4-2-.6-.9 1.9h-2l-.9-1.9-2 .6-1.4-1.4.6-2-1.9-.9v-2l1.9-.9-.6-2 1.4-1.4 2 .6.9-1.9z',
+          'stroke-width': '1.3',
+          'stroke-linejoin': 'round',
+          /* The gear path's own bounding box is centered on (7, 8.2), so
+           * the transform recenters it on (8, 8) to line up with the
+           * inner circle. */
+          transform: 'translate(8 8) scale(.92) translate(-7 -8.2)',
+        },
+      ],
+    ],
+    close: [['path', { d: 'M4 4l8 8M12 4l-8 8', 'stroke-width': '1.8' }]],
   };
+
+  function setAttrs(node, attrs) {
+    for (var key in attrs) node.setAttribute(key, attrs[key]);
+  }
+
+  function icon(name) {
+    var svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    var shapes = ICONS[name];
+    for (var i = 0; i < shapes.length; i++) {
+      var node = document.createElementNS(SVG_NS, shapes[i][0]);
+      setAttrs(node, SHAPE_DEFAULTS);
+      setAttrs(node, shapes[i][1]);
+      svg.appendChild(node);
+    }
+    return svg;
+  }
+
+  /* h('span', { class: 'lbl' }, ['text', node]) */
+  function h(tag, attrs, children) {
+    var node = document.createElement(tag);
+    if (attrs) setAttrs(node, attrs);
+    for (var i = 0; children && i < children.length; i++) {
+      var child = children[i];
+      node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+    }
+    return node;
+  }
+
+  function button(cls, label, iconName) {
+    return h('button', { class: cls, title: label }, [icon(iconName)]);
+  }
+
+  function menuItem(cls, label, iconName) {
+    return h('div', { class: 'mi ' + cls }, [icon(iconName), h('span', { class: 'lbl' }, [label])]);
+  }
+
+  var CSS =
+    ':host{all:initial}' +
+    '.bar{position:fixed;top:0;left:0;right:0;height:38px;display:flex;align-items:center;gap:2px;' +
+    'padding:0 6px;box-sizing:border-box;background:rgba(22,30,38,.92);backdrop-filter:blur(10px);' +
+    'font:12px/1 -apple-system,"Segoe UI",system-ui,sans-serif;color:#dfe9f2;' +
+    'opacity:0;transform:translateY(-100%);transition:opacity .18s ease-out,transform .18s ease-out;pointer-events:none}' +
+    '.bar.visible{opacity:1;transform:translateY(0);pointer-events:auto}' +
+    /* The title + spacer pair and the urlbox are two faces of the same
+     * flex:1 slot, so toggling them never moves the buttons around it. */
+    '.mid{flex:1 1 auto;min-width:0;display:flex;align-items:center;align-self:stretch}' +
+    '.title{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
+    'display:flex;align-items:center;gap:6px;padding:0 6px;border-radius:7px;height:28px;' +
+    'color:#aebfcd;user-select:none;-webkit-user-select:none;cursor:grab}' +
+    '.title:hover{background:rgba(255,255,255,.1)}' +
+    '.title img{width:14px;height:14px;border-radius:3px}' +
+    '.spacer{flex:1 1 auto;align-self:stretch;cursor:grab;min-width:24px}' +
+    '.urlbox{display:none;flex:1 1 auto;min-width:0;height:26px;margin:0 2px;padding:0 10px;' +
+    'border:1px solid rgba(255,255,255,.25);border-radius:7px;background:rgba(0,0,0,.35);' +
+    'color:#eef5fb;font:12px -apple-system,"Segoe UI",system-ui,sans-serif;outline:none;' +
+    'box-sizing:border-box;user-select:text;-webkit-user-select:text}' +
+    '.urlbox:focus{border-color:#3fa9f5}' +
+    '.bar.editing .urlbox{display:block}' +
+    '.bar.editing .title,.bar.editing .spacer{display:none}' +
+    'button{all:initial;cursor:pointer;width:28px;height:28px;border-radius:7px;display:inline-flex;' +
+    'align-items:center;justify-content:center;color:#dfe9f2;flex:0 0 auto}' +
+    'button:hover{background:rgba(255,255,255,.14)}' +
+    'button.close:hover{background:#d64545;color:#fff}' +
+    'button.pin.off{color:#7a8a98}' +
+    'button.mn.open{background:rgba(255,255,255,.14)}' +
+    'button svg{width:15px;height:15px;display:block}' +
+    /* Chromium-style dropdown menu */
+    /* The menu is a sibling of .bar, so it needs its own font: with
+     * :host{all:initial} it would otherwise fall back to serif. */
+    '.menu{position:fixed;top:40px;min-width:200px;padding:6px;border-radius:12px;display:none;' +
+    'font:12px/1 -apple-system,"Segoe UI",system-ui,sans-serif;color:#dfe9f2;' +
+    'background:rgba(30,39,48,.98);backdrop-filter:blur(14px);box-shadow:0 10px 34px rgba(0,0,0,.45);' +
+    'border:1px solid rgba(255,255,255,.09)}' +
+    '.menu.open{display:block}' +
+    '.mi{display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 10px;' +
+    'border-radius:8px;box-sizing:border-box;cursor:pointer;color:#dfe9f2}' +
+    '.mi:hover{background:rgba(255,255,255,.12)}' +
+    '.mi svg{width:15px;height:15px;flex:0 0 auto}' +
+    '.mi .lbl{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.zrow{display:flex;align-items:center;gap:2px;height:32px;padding:0 4px}' +
+    '.zrow .zlbl{flex:1 1 auto;text-align:center;color:#aebfcd;font-size:12px;' +
+    'font-variant-numeric:tabular-nums}' +
+    '.msep{border:0;border-top:1px solid rgba(255,255,255,.12);margin:6px 4px}';
 
   function build() {
     if (!document.documentElement) return;
@@ -174,160 +294,47 @@
     host.style.cssText = 'all:initial;position:fixed;top:0;left:0;right:0;z-index:2147483647;';
     var shadow = host.attachShadow({ mode: 'closed' });
 
-    shadow.innerHTML =
-      '<style>' +
-      ':host{all:initial}' +
-      '.bar{position:fixed;top:0;left:0;right:0;height:38px;display:flex;align-items:center;gap:2px;' +
-      'padding:0 6px;box-sizing:border-box;background:rgba(22,30,38,.92);backdrop-filter:blur(10px);' +
-      'font:12px/1 -apple-system,"Segoe UI",system-ui,sans-serif;color:#dfe9f2;' +
-      'opacity:0;transform:translateY(-100%);transition:opacity .18s ease-out,transform .18s ease-out;pointer-events:none}' +
-      '.bar.visible{opacity:1;transform:translateY(0);pointer-events:auto}' +
-      /* The title + spacer pair and the urlbox are two faces of the same
-       * flex:1 slot, so toggling them never moves the buttons around it. */
-      '.mid{flex:1 1 auto;min-width:0;display:flex;align-items:center;align-self:stretch}' +
-      '.title{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
-      'display:flex;align-items:center;gap:6px;padding:0 6px;border-radius:7px;height:28px;' +
-      'color:#aebfcd;user-select:none;-webkit-user-select:none;cursor:grab}' +
-      '.title:hover{background:rgba(255,255,255,.1)}' +
-      '.title img{width:14px;height:14px;border-radius:3px}' +
-      '.spacer{flex:1 1 auto;align-self:stretch;cursor:grab;min-width:24px}' +
-      '.urlbox{display:none;flex:1 1 auto;min-width:0;height:26px;margin:0 2px;padding:0 10px;' +
-      'border:1px solid rgba(255,255,255,.25);border-radius:7px;background:rgba(0,0,0,.35);' +
-      'color:#eef5fb;font:12px -apple-system,"Segoe UI",system-ui,sans-serif;outline:none;' +
-      'box-sizing:border-box;user-select:text;-webkit-user-select:text}' +
-      '.urlbox:focus{border-color:#3fa9f5}' +
-      '.bar.editing .urlbox{display:block}' +
-      '.bar.editing .title,.bar.editing .spacer{display:none}' +
-      'button{all:initial;cursor:pointer;width:28px;height:28px;border-radius:7px;display:inline-flex;' +
-      'align-items:center;justify-content:center;color:#dfe9f2;flex:0 0 auto}' +
-      'button:hover{background:rgba(255,255,255,.14)}' +
-      'button.close:hover{background:#d64545;color:#fff}' +
-      'button.pin.off{color:#7a8a98}' +
-      'button.mn.open{background:rgba(255,255,255,.14)}' +
-      'button svg{width:15px;height:15px;display:block}' +
-      /* Chromium-style dropdown menu */
-      /* The menu is a sibling of .bar, so it needs its own font: with
-       * :host{all:initial} it would otherwise fall back to serif. */
-      '.menu{position:fixed;top:40px;min-width:200px;padding:6px;border-radius:12px;display:none;' +
-      'font:12px/1 -apple-system,"Segoe UI",system-ui,sans-serif;color:#dfe9f2;' +
-      'background:rgba(30,39,48,.98);backdrop-filter:blur(14px);box-shadow:0 10px 34px rgba(0,0,0,.45);' +
-      'border:1px solid rgba(255,255,255,.09)}' +
-      '.menu.open{display:block}' +
-      '.mi{display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 10px;' +
-      'border-radius:8px;box-sizing:border-box;cursor:pointer;color:#dfe9f2}' +
-      '.mi:hover{background:rgba(255,255,255,.12)}' +
-      '.mi svg{width:15px;height:15px;flex:0 0 auto}' +
-      '.mi .lbl{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-      '.zrow{display:flex;align-items:center;gap:2px;height:32px;padding:0 4px}' +
-      '.zrow .zlbl{flex:1 1 auto;text-align:center;color:#aebfcd;font-size:12px;' +
-      'font-variant-numeric:tabular-nums}' +
-      '.msep{border:0;border-top:1px solid rgba(255,255,255,.12);margin:6px 4px}' +
-      '</style>' +
-      buildBarHtml() +
-      buildMenuHtml();
+    var style = document.createElement('style');
+    style.textContent = CSS;
+    shadow.appendChild(style);
 
-    var isMac = /mac/i.test(navigator.platform || '') || /mac os/i.test(navigator.userAgent || '');
+    /* One layout everywhere: the window controls sit on the right of the
+     * actions, on macOS too. The toolbar is not an OS titlebar, so matching
+     * the platform's traffic-light side buys nothing and splits the code. */
+    var mid = h('span', { class: 'mid' }, [
+      h('span', { class: 'title', title: isNewTabPage ? L.dragOnly : L.drag }, [
+        h('img', { alt: '', hidden: '' }),
+        h('span', { class: 'text' }),
+      ]),
+      h('span', { class: 'spacer' }),
+      h('input', { class: 'urlbox', type: 'text', spellcheck: 'false' }),
+    ]);
+    var actions = [
+      button('rf', L.refresh, 'refresh'),
+      button('pin', L.pin, 'pin'),
+      button('mn', L.menu, 'dots'),
+      button('min', L.minimize, 'minimize'),
+      button('close', L.close, 'close'),
+    ];
+    var bar = h('div', { class: 'bar', part: 'bar' }, [mid].concat(actions));
 
-    function buildBarHtml() {
-      // macOS users expect window controls on the left (traffic-light side);
-      // everyone else gets them on the right.
-      var windowControlsLeft =
-        '<button class="close" title="' +
-        L.close +
-        '">' +
-        ICONS.close +
-        '</button>' +
-        '<button class="min" title="' +
-        L.minimize +
-        '">' +
-        ICONS.minimize +
-        '</button>';
-      var windowControlsRight =
-        '<button class="min" title="' +
-        L.minimize +
-        '">' +
-        ICONS.minimize +
-        '</button>' +
-        '<button class="close" title="' +
-        L.close +
-        '">' +
-        ICONS.close +
-        '</button>';
-      var actions =
-        '<button class="rf" title="' +
-        L.refresh +
-        '">' +
-        ICONS.refresh +
-        '</button>' +
-        '<button class="pin" title="' +
-        L.pin +
-        '">' +
-        ICONS.pin +
-        '</button>' +
-        '<button class="mn" title="' +
-        L.menu +
-        '">' +
-        ICONS.dots +
-        '</button>';
-      var mid =
-        '<span class="mid">' +
-        '<span class="title" title="' +
-        (isNewTabPage ? L.dragOnly : L.drag) +
-        '"><img alt="" hidden><span class="text"></span></span>' +
-        '<span class="spacer"></span>' +
-        '<input class="urlbox" type="text" spellcheck="false">' +
-        '</span>';
-      return (
-        '<div class="bar" part="bar">' +
-        (isMac ? windowControlsLeft + mid + actions : mid + actions + windowControlsRight) +
-        '</div>'
-      );
-    }
+    var menu = h('div', { class: 'menu' }, [
+      h('div', { class: 'zrow' }, [
+        button('zo', L.zoomOut, 'zoomOut'),
+        h('span', { class: 'zlbl' }, ['100%']),
+        button('zi', L.zoomIn, 'zoomIn'),
+        button('zr', L.zoomReset, 'zoomReset'),
+      ]),
+      h('hr', { class: 'msep' }),
+      menuItem('ar', L.aspect, 'aspect'),
+      menuItem('nw', L.newWindow, 'plus'),
+      h('hr', { class: 'msep' }),
+      menuItem('cfg', L.settings, 'settings'),
+    ]);
 
-    function buildMenuHtml() {
-      return (
-        '<div class="menu">' +
-        '<div class="zrow">' +
-        '<button class="zo" title="' +
-        L.zoomOut +
-        '">' +
-        ICONS.zoomOut +
-        '</button>' +
-        '<span class="zlbl">100%</span>' +
-        '<button class="zi" title="' +
-        L.zoomIn +
-        '">' +
-        ICONS.zoomIn +
-        '</button>' +
-        '<button class="zr" title="' +
-        L.zoomReset +
-        '">' +
-        ICONS.zoomReset +
-        '</button>' +
-        '</div>' +
-        '<hr class="msep">' +
-        '<div class="mi ar">' +
-        ICONS.aspect +
-        '<span class="lbl">' +
-        L.aspect +
-        '</span></div>' +
-        '<div class="mi nw">' +
-        ICONS.plus +
-        '<span class="lbl">' +
-        L.newWindow +
-        '</span></div>' +
-        '<hr class="msep">' +
-        '<div class="mi cfg">' +
-        ICONS.settings +
-        '<span class="lbl">' +
-        L.settings +
-        '</span></div>' +
-        '</div>'
-      );
-    }
+    shadow.appendChild(bar);
+    shadow.appendChild(menu);
 
-    var bar = shadow.querySelector('.bar');
-    var menu = shadow.querySelector('.menu');
     var $ = function (sel) {
       return shadow.querySelector(sel);
     };
@@ -338,6 +345,7 @@
       var link = document.querySelector('link[rel~="icon"]');
       var img = $('.title img');
       var href = link ? link.href : location.origin + '/favicon.ico';
+      if (img.src === href) return;
       img.onerror = function () {
         img.hidden = true;
       };
@@ -347,11 +355,16 @@
       img.src = href;
     }
     refreshTitle();
-    new MutationObserver(refreshTitle).observe(document.documentElement, {
-      childList: true,
-      subtree: true,
-      characterData: false,
-    });
+    /* Watch the head only. Both the title and the favicon live there, while
+     * a subtree observer on documentElement wakes up for every DOM change
+     * the page makes - on YouTube that is thousands per minute. */
+    if (document.head) {
+      new MutationObserver(refreshTitle).observe(document.head, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
 
     /* show / hide */
     function show() {
