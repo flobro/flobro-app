@@ -18,7 +18,9 @@ Install Rust via https://rustup.rs plus the Tauri prerequisites for your OS (htt
 - Run locally: `cargo tauri dev`
 - Build: `cargo tauri build`
 - Lint: `npm run lint` (Biome). Auto-fix: `npm run lint:fix`
-- Tests: cargo check inside src-tauri/ plus `npm run lint` for the frontend
+- Tests: `npm test` runs the toolbar regression suite in a real WKWebView
+  (macOS only, see tests/README.md); plus cargo check inside src-tauri/ and
+  `npm run lint` for the frontend
 
 ## Code style
 
