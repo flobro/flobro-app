@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="flobro-fixture" content="hotkeys">
+<title>Hotkey-capturing page</title>
+<link rel="icon" href="favicon.svg">
+<body>
+  <p>Stands in for twitch.tv: single-key shortcuts claimed on the way down (#8).</p>
+  <script>
+    /* Twitch-style: a capturing document listener that eats every keystroke
+     * before it can reach anything else on the page. */
+    let seen = 0;
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        seen += 1;
+        e.stopPropagation();
+        e.preventDefault();
+      },
+      true,
+    );
+    window.pageKeysSeen = () => seen;
+  </script>
+</body>

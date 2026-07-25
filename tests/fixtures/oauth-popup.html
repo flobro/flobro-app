@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="flobro-fixture" content="oauth-popup">
+<title>OAuth popup page</title>
+<link rel="icon" href="favicon.svg">
+<body>
+  <p>Stands in for "Continue with Google" on tradingview.com (#4).</p>
+  <script>
+    /* What an OAuth client library does: open the provider in a popup and
+     * keep the handle so it can post to it and notice when it closes. */
+    window.startSignIn = () => window.open('https://accounts.google.com/o/oauth2/auth', 'oauth');
+  </script>
+</body>
