@@ -41,11 +41,18 @@ commits directly become release notes.
 `npm run lint` before pushing, or `npm run lint:fix` to auto-fix.
 Rust code is formatted with `cargo fmt` (checked by the pre-commit hook).
 
+## Tests
+
+`npm test` runs the toolbar regression suite: the real `toolbar.js` in a real
+WKWebView, against fixture pages that reproduce what broke it on YouTube,
+Twitch and friends. It needs macOS with Swift. See
+[tests/README.md](tests/README.md) for how to add a case.
+
 ## Pull requests
 
 1. Fork, create a branch from `main` (`feat/…` or `fix/…`)
 2. Keep PRs focused: one topic per PR
-3. Make sure `npm run lint` passes and the app/site still works
+3. Make sure `npm run lint` and `npm test` pass and the app/site still works
 4. Describe *why*, not just *what*, in the PR description
 
 ## Translations

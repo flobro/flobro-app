@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="flobro-fixture" content="dom-wipe">
+<title>Document-replacing page</title>
+<link rel="icon" href="favicon.svg">
+<body>
+  <p>Stands in for an SPA route change and for a dev server reloading in place.</p>
+  <script>
+    /* Replaces documentElement's children wholesale, the way a hot-reloading
+     * dev server does, which takes the toolbar host down with it. */
+    window.wipeDocument = () => {
+      const head = document.createElement('head');
+      const body = document.createElement('body');
+      const title = document.createElement('title');
+      title.textContent = document.title;
+      head.appendChild(title);
+      const p = document.createElement('p');
+      p.textContent = 'Replaced at ' + Date.now();
+      body.appendChild(p);
+      document.documentElement.replaceChildren(head, body);
+    };
+  </script>
+</body>
