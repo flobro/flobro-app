@@ -1,7 +1,6 @@
 /**
- * Flobro hover toolbar — injected into every floating browser window.
- * Invisible until the mouse reaches the top edge; the page itself is
- * completely interface-free otherwise.
+ * Flobro hover toolbar — injected into every floating window; hidden until
+ * the mouse reaches the top edge.
  */
 (function flobroToolbar() {
   'use strict';
@@ -67,10 +66,9 @@
     /\/new\.html$/.test(location.pathname);
 
   function invoke(cmd, args) {
-    /* Remote pages don't always get the __TAURI__ global bundle; the
-     * internals object is injected whenever IPC is enabled, so fall back
-     * to it. Failures are logged so a misconfigured capability is visible
-     * in the webview console instead of a silently dead button. */
+    /* Remote pages may lack the __TAURI__ bundle; fall back to the
+     * internals object when IPC is enabled. Failures are logged so a
+     * misconfigured capability is visible, not a silently dead button. */
     try {
       var fn =
         window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke
@@ -99,19 +97,9 @@
     }
   }
 
-  /* Some pages (Twitch, for one - see issue #8) register their own
-   * document-level, capturing-phase keydown listener to catch keyboard
-   * shortcuts (mute, chat focus, etc.) and call stopPropagation() there,
-   * which silently eats every keystroke typed into the toolbar's URL editor
-   * before it ever reaches the urlbox. Registering our own capturing
-   * listener here, at script-injection time and outside build() (so it runs
-   * before any page script has had a chance to register one of its own),
-   * guarantees ours runs first among listeners on the same node. While the
-   * URL editor is open we call stopImmediatePropagation() to keep the event
-   * away from the page entirely; that only blocks other JS listeners, not
-   * the browser's native default action, so typing into the focused urlbox
-   * is unaffected - only preventDefault() would block that, and we never
-   * call it here. */
+  /* Some pages (Twitch - see #8) capture keydown and stopPropagation(),
+   * eating keystrokes meant for the URL editor. Registering our own
+   * capturing listener here, before build(), guarantees it runs first. */
   var urlEditing = false;
   var urlEditRefs = null; // { close, commit } - populated by build()
 
@@ -126,16 +114,9 @@
     true,
   );
 
-  /* target="_blank" links and window.open() calls do nothing by default in
-   * a Tauri webview: there is no built-in new-window handling. Route both
-   * to a new float window instead (reusing the existing open_float
-   * command), which also covers OAuth/sign-in popups (Google's sign-in
-   * flow, for one, is a window.open() call). This is patched here, at
-   * script-injection time and outside build(), so it runs before any of
-   * the page's own scripts get a chance to run and cache a reference to
-   * the original window.open. Full tabbed UI within a single window is a
-   * separate, larger piece of work tracked on its own; this only makes
-   * "open a new window" requests do something instead of nothing. */
+  /* Tauri webviews ignore target="_blank" and window.open(); route both to
+   * a new float window (covers OAuth popups too). Patched here, outside
+   * build(), so it runs before the page can cache its own window.open. */
   function openInNewFloat(url) {
     if (!url) return;
     invoke('open_float', { url: String(url) });
@@ -428,10 +409,8 @@
     });
 
     /* URL editing: double-click the title, Enter navigates, Esc cancels.
-     * Escape/Enter handling lives in the document-level capturing keydown
-     * listener registered above (outside build()), which also shields every
-     * keystroke from page-level interception while the editor is open; see
-     * the comment there for why. */
+     * Escape/Enter handling lives in the capturing keydown listener
+     * registered above, which also shields keystrokes from page scripts. */
     var urlbox = $('.urlbox');
     function openUrlEdit() {
       bar.classList.add('editing');
