@@ -99,6 +99,33 @@
     }
   }
 
+  /* Some pages (Twitch, for one - see issue #8) register their own
+   * document-level, capturing-phase keydown listener to catch keyboard
+   * shortcuts (mute, chat focus, etc.) and call stopPropagation() there,
+   * which silently eats every keystroke typed into the toolbar's URL editor
+   * before it ever reaches the urlbox. Registering our own capturing
+   * listener here, at script-injection time and outside build() (so it runs
+   * before any page script has had a chance to register one of its own),
+   * guarantees ours runs first among listeners on the same node. While the
+   * URL editor is open we call stopImmediatePropagation() to keep the event
+   * away from the page entirely; that only blocks other JS listeners, not
+   * the browser's native default action, so typing into the focused urlbox
+   * is unaffected - only preventDefault() would block that, and we never
+   * call it here. */
+  var urlEditing = false;
+  var urlEditRefs = null; // { close, commit } - populated by build()
+
+  document.addEventListener(
+    'keydown',
+    function (e) {
+      if (!urlEditing || !urlEditRefs) return;
+      e.stopImmediatePropagation();
+      if (e.key === 'Escape') return urlEditRefs.close();
+      if (e.key === 'Enter') return urlEditRefs.commit();
+    },
+    true,
+  );
+
   var ICONS = {
     zoomOut:
       '<svg viewBox="0 0 16 16"><path d="M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>',
@@ -363,21 +390,25 @@
       if (e.key === 'Escape' && menu.classList.contains('open')) closeMenu();
     });
 
-    /* URL editing: double-click the title, Enter navigates, Esc cancels */
+    /* URL editing: double-click the title, Enter navigates, Esc cancels.
+     * Escape/Enter handling lives in the document-level capturing keydown
+     * listener registered above (outside build()), which also shields every
+     * keystroke from page-level interception while the editor is open; see
+     * the comment there for why. */
     var urlbox = $('.urlbox');
     function openUrlEdit() {
       bar.classList.add('editing');
       urlbox.value = location.href === 'about:blank' ? '' : location.href;
       urlbox.focus();
       urlbox.select();
+      urlEditing = true;
     }
     function closeUrlEdit() {
       bar.classList.remove('editing');
+      urlEditing = false;
       scheduleHide();
     }
-    urlbox.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') return closeUrlEdit();
-      if (e.key !== 'Enter') return;
+    function commitUrlEdit() {
       var v = urlbox.value.trim();
       if (!v) return closeUrlEdit();
       if (v.indexOf('://') === -1) v = 'https://' + v;
@@ -393,7 +424,8 @@
       if (!url || (url.protocol !== 'http:' && url.protocol !== 'https:')) return;
       closeUrlEdit();
       if (url.href !== location.href) location.href = url.href;
-    });
+    }
+    urlEditRefs = { close: closeUrlEdit, commit: commitUrlEdit };
     urlbox.addEventListener('blur', closeUrlEdit);
 
     /* titlebar: press-and-move drags, double-click edits the URL */
