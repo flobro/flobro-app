@@ -7,7 +7,6 @@ const { emit } = window.__TAURI__.event;
 const appWindow = window.__TAURI__.window.getCurrentWindow();
 
 const $ = (sel) => document.querySelector(sel);
-const t = window.FLOBRO_I18N.t;
 window.FLOBRO_I18N.apply();
 let settings = null;
 
