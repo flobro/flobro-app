@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!node_modules", "!src-tauri/target", "!src-tauri/gen", "!src-tauri/icons"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!src-tauri/target",
+      "!src-tauri/gen",
+      "!src-tauri/icons",
+      "!**/.claude"
+    ]
   },
   "formatter": {
     "enabled": true,
