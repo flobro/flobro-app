@@ -58,6 +58,18 @@ for (const id of ['open-on-start', 'stay-on-top', 'remember-recent', 'share-usag
 $('#default-url').addEventListener('change', save);
 $('#default-url').addEventListener('input', saveSoon);
 $('#close').addEventListener('click', () => appWindow.close());
+
+/* Cmd+W / Ctrl+W, same as the close button. This window has no titlebar,
+ * and on Windows there is no menu bar to hang an accelerator on. */
+document.addEventListener('keydown', (e) => {
+  const modifier = /mac/i.test(navigator.platform || navigator.userAgent || '')
+    ? e.metaKey
+    : e.ctrlKey;
+  if (modifier && !e.altKey && !e.shiftKey && (e.key === 'w' || e.key === 'W')) {
+    e.preventDefault();
+    appWindow.close();
+  }
+});
 $('#feedback').addEventListener('click', () =>
   openUrl('https://github.com/flobro/flobro-app/issues'),
 );
