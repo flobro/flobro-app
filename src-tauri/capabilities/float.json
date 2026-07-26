@@ -1,18 +1,23 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "float",
-  "description": "Minimal IPC surface for floating browser windows loading remote pages. Only the injected Flobro toolbar uses this: window dragging plus the app's own float_* commands.",
+  "description": "Minimal IPC surface for floating browser windows. The band webview drives the window; the page webview only routes new-window requests and reports its title and favicon.",
   "remote": {
     "urls": ["https://**", "http://**"]
   },
   "windows": ["float-*"],
+  "webviews": ["float-*-band", "float-*-page"],
   "permissions": [
+    "core:event:default",
     "core:window:allow-start-dragging",
     "allow-float-pin",
     "allow-float-zoom",
     "allow-float-aspect",
     "allow-float-minimize",
     "allow-float-close",
+    "allow-float-reload",
+    "allow-float-navigate",
+    "allow-report-page-meta",
     "allow-open-settings",
     "allow-float-new",
     "allow-open-float"

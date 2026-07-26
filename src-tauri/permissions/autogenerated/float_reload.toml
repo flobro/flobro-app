@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-float-reload"
+description = "Enables the float_reload command without any pre-configured scope."
+commands.allow = ["float_reload"]
+
+[[permission]]
+identifier = "deny-float-reload"
+description = "Denies the float_reload command without any pre-configured scope."
+commands.deny = ["float_reload"]

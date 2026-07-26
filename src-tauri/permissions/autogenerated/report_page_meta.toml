@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-report-page-meta"
+description = "Enables the report_page_meta command without any pre-configured scope."
+commands.allow = ["report_page_meta"]
+
+[[permission]]
+identifier = "deny-report-page-meta"
+description = "Denies the report_page_meta command without any pre-configured scope."
+commands.deny = ["report_page_meta"]

@@ -1,9 +1,7 @@
 use std::fs;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
-use tauri::{
-    AppHandle, Emitter, Manager, PhysicalSize, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
-};
+use tauri::{AppHandle, Emitter, Manager, PhysicalSize, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_updater::UpdaterExt;
 
@@ -136,7 +134,7 @@ async fn manual_update_check(app: AppHandle) {
         });
 }
 
-const TOOLBAR_JS: &str = include_str!("toolbar.js");
+const PAGE_JS: &str = include_str!("page.js");
 
 /* ------------------------------ analytics -------------------------------
  * Privacy-friendly usage stats via PostHog (EU cloud).
@@ -297,6 +295,149 @@ fn normalize_url(input: &str) -> Result<url::Url, String> {
     }
 }
 
+/* --------------------------- the reserved band ---------------------------
+ * Spike for #1. A float window is a plain Window hosting two child webviews:
+ * a 38px band across the top holding the toolbar, and the page below it.
+ * The page's viewport starts under the band, so the toolbar never covers the
+ * site: the thing the hover version cannot promise.
+ *
+ * The cost is here in plain sight: multiple webviews per window is Tauri's
+ * `unstable` feature, the children have to be refitted on every resize, and
+ * the toolbar can no longer read the page it describes, so title and favicon
+ * arrive over IPC instead of from the DOM next to it. */
+const BAND_HEIGHT: f64 = 38.0;
+
+fn band_label(window_label: &str) -> String {
+    format!("{window_label}-band")
+}
+
+fn page_label(window_label: &str) -> String {
+    format!("{window_label}-page")
+}
+
+/// The page child of a float window, which is what the toolbar's zoom,
+/// reload and navigation act on now that a window holds more than one.
+fn page_webview(window: &tauri::Window) -> Option<tauri::Webview> {
+    let wanted = page_label(window.label());
+    window.webviews().into_iter().find(|w| w.label() == wanted)
+}
+
+/// Keeps the band and the page fitted to the window.
+fn fit_children(window: &tauri::Window) -> tauri::Result<()> {
+    let scale = window.scale_factor()?;
+    let size = window.inner_size()?.to_logical::<f64>(scale);
+    let page_height = (size.height - BAND_HEIGHT).max(1.0);
+    for webview in window.webviews() {
+        let is_band = webview.label().ends_with("-band");
+        let rect = tauri::Rect {
+            position: tauri::LogicalPosition::new(0.0, if is_band { 0.0 } else { BAND_HEIGHT })
+                .into(),
+            size: tauri::LogicalSize::new(
+                size.width,
+                if is_band { BAND_HEIGHT } else { page_height },
+            )
+            .into(),
+        };
+        webview.set_bounds(rect)?;
+    }
+    Ok(())
+}
+
+/// Builds a float window: the band on top, the page underneath.
+fn build_float(
+    app: &AppHandle,
+    label: &str,
+    page_url: WebviewUrl,
+    settings: &Settings,
+) -> Result<(), String> {
+    let window = tauri::window::WindowBuilder::new(app, label)
+        .title("Flobro")
+        .decorations(false)
+        .always_on_top(settings.stay_on_top)
+        .inner_size(560.0, 348.0)
+        .min_inner_size(170.0, 38.0)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let scale = window.scale_factor().map_err(|e| e.to_string())?;
+    let size = window
+        .inner_size()
+        .map_err(|e| e.to_string())?
+        .to_logical::<f64>(scale);
+
+    window
+        .add_child(
+            tauri::webview::WebviewBuilder::new(
+                band_label(label),
+                WebviewUrl::App("band.html".into()),
+            ),
+            tauri::LogicalPosition::new(0.0, 0.0),
+            tauri::LogicalSize::new(size.width, BAND_HEIGHT),
+        )
+        .map_err(|e| e.to_string())?;
+
+    window
+        .add_child(
+            tauri::webview::WebviewBuilder::new(page_label(label), page_url)
+                .initialization_script(PAGE_JS),
+            tauri::LogicalPosition::new(0.0, BAND_HEIGHT),
+            tauri::LogicalSize::new(size.width, (size.height - BAND_HEIGHT).max(1.0)),
+        )
+        .map_err(|e| e.to_string())?;
+
+    let resized = window.clone();
+    window.on_window_event(move |event| {
+        if matches!(event, tauri::WindowEvent::Resized(_)) {
+            let _ = fit_children(&resized);
+        }
+    });
+
+    // Hide the launcher once a float window is up
+    if let Some(launcher) = app.get_webview_window("launcher") {
+        let _ = launcher.hide();
+    }
+    Ok(())
+}
+
+/// The page reports what the band cannot see for itself. In the single
+/// webview design the toolbar just read document.title next to it.
+#[tauri::command]
+fn report_page_meta(
+    app: AppHandle,
+    webview: tauri::Webview,
+    title: String,
+    icon: String,
+    url: String,
+) -> Result<(), String> {
+    let window_label = webview.window().label().to_string();
+    app.emit_to(
+        band_label(&window_label),
+        "flobro-page-meta",
+        serde_json::json!({ "title": title, "icon": icon, "url": url }),
+    )
+    .map_err(|e| e.to_string())
+}
+
+/// Navigate the page from the band's address bar. Same http(s)-only rule as
+/// the old in-page URL editor, enforced here rather than in the page.
+#[tauri::command]
+fn float_navigate(window: tauri::Window, url: String) -> Result<(), String> {
+    let parsed = normalize_url(&url)?;
+    if let Some(page) = page_webview(&window) {
+        page.navigate(parsed).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Reload from the band, which cannot call location.reload() on the page.
+#[tauri::command]
+fn float_reload(window: tauri::Window) -> Result<(), String> {
+    if let Some(page) = page_webview(&window) {
+        page.eval("location.reload()").map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 async fn open_float(app: AppHandle, url: String) -> Result<(), String> {
     let parsed = normalize_url(&url)?;
@@ -321,21 +462,7 @@ async fn open_float(app: AppHandle, url: String) -> Result<(), String> {
     let n = FLOAT_COUNTER.fetch_add(1, Ordering::SeqCst);
     let label = format!("float-{n}");
 
-    WebviewWindowBuilder::new(&app, &label, WebviewUrl::External(parsed))
-        .title("Flobro")
-        .decorations(false)
-        .always_on_top(settings.stay_on_top)
-        .inner_size(560.0, 348.0)
-        .min_inner_size(170.0, 38.0)
-        .initialization_script(&TOOLBAR_JS.replace("__FLOBRO_LANG__", resolved_lang(&settings)))
-        .build()
-        .map_err(|e| e.to_string())?;
-
-    // Hide the launcher once a float window is up
-    if let Some(launcher) = app.get_webview_window("launcher") {
-        let _ = launcher.hide();
-    }
-    Ok(())
+    build_float(&app, &label, WebviewUrl::External(parsed), &settings)
 }
 
 /// Opens an empty float window (the toolbar's and menu's "New window").
@@ -349,51 +476,42 @@ async fn float_new(app: AppHandle) -> Result<(), String> {
     let n = FLOAT_COUNTER.fetch_add(1, Ordering::SeqCst);
     let label = format!("float-{n}");
 
-    WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("new.html".into()))
-        .title("Flobro")
-        .decorations(false)
-        .always_on_top(settings.stay_on_top)
-        .inner_size(560.0, 348.0)
-        .min_inner_size(170.0, 38.0)
-        .initialization_script(&TOOLBAR_JS.replace("__FLOBRO_LANG__", resolved_lang(&settings)))
-        .build()
-        .map_err(|e| e.to_string())?;
+    build_float(&app, &label, WebviewUrl::App("new.html".into()), &settings)
+}
 
-    if let Some(launcher) = app.get_webview_window("launcher") {
-        let _ = launcher.hide();
+#[tauri::command]
+fn float_pin(window: tauri::Window, pinned: bool) -> Result<(), String> {
+    window.set_always_on_top(pinned).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn float_zoom(window: tauri::Window, factor: f64) -> Result<(), String> {
+    // Only the page zooms; the band keeps its own scale.
+    if let Some(page) = page_webview(&window) {
+        page.set_zoom(factor.clamp(0.25, 5.0))
+            .map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
 #[tauri::command]
-fn float_pin(window: WebviewWindow, pinned: bool) -> Result<(), String> {
-    window.set_always_on_top(pinned).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn float_zoom(window: WebviewWindow, factor: f64) -> Result<(), String> {
-    window
-        .set_zoom(factor.clamp(0.25, 5.0))
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn float_aspect(window: WebviewWindow) -> Result<(), String> {
+fn float_aspect(window: tauri::Window) -> Result<(), String> {
     // Keep current width, snap height to 16:9 (plus nothing — the toolbar overlays)
     let size = window.inner_size().map_err(|e| e.to_string())?;
     let height = (size.width as f64 * 9.0 / 16.0).round() as u32;
     window
         .set_size(PhysicalSize::new(size.width, height))
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    fit_children(&window).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn float_minimize(window: WebviewWindow) -> Result<(), String> {
+fn float_minimize(window: tauri::Window) -> Result<(), String> {
     window.minimize().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn float_close(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+fn float_close(app: AppHandle, window: tauri::Window) -> Result<(), String> {
     let label = window.label().to_string();
     window.close().map_err(|e| e.to_string())?;
     // If that was the last float window, bring the launcher back
@@ -666,6 +784,9 @@ pub fn run() {
             float_aspect,
             float_minimize,
             float_close,
+            float_reload,
+            float_navigate,
+            report_page_meta,
             open_settings,
             show_launcher,
             check_update,
@@ -711,30 +832,35 @@ pub fn run() {
                     }
                     "reload-page" => {
                         // Reload the focused float window, if any
-                        for (label, win) in app.webview_windows() {
+                        for (label, win) in app.windows() {
                             if label.starts_with("float-") && win.is_focused().unwrap_or(false) {
-                                let _ = win.eval("location.reload()");
+                                let _ = float_reload(win);
                             }
                         }
                     }
                     "zoom-in" | "zoom-out" | "zoom-reset" => {
-                        // Zoom runs through the toolbar's hook so the toolbar's
-                        // zoom label stays in sync with the menu.
-                        let js = match event.id().as_ref() {
-                            "zoom-in" => "window.__FLOBRO_ZOOM_BY__&&window.__FLOBRO_ZOOM_BY__(.1)",
-                            "zoom-out" => {
-                                "window.__FLOBRO_ZOOM_BY__&&window.__FLOBRO_ZOOM_BY__(-.1)"
-                            }
-                            _ => "window.__FLOBRO_ZOOM_BY__&&window.__FLOBRO_ZOOM_BY__(0)",
+                        // The band holds the zoom state now, so the menu goes
+                        // through it rather than through the page.
+                        let delta = match event.id().as_ref() {
+                            "zoom-in" => ".1",
+                            "zoom-out" => "-.1",
+                            _ => "0",
                         };
-                        for (label, win) in app.webview_windows() {
+                        let js = format!(
+                            "window.__FLOBRO_ZOOM_BY__&&window.__FLOBRO_ZOOM_BY__({delta})"
+                        );
+                        for (label, win) in app.windows() {
                             if label.starts_with("float-") && win.is_focused().unwrap_or(false) {
-                                let _ = win.eval(js);
+                                for webview in win.webviews() {
+                                    if webview.label().ends_with("-band") {
+                                        let _ = webview.eval(&js);
+                                    }
+                                }
                             }
                         }
                     }
                     "aspect-169" => {
-                        for (label, win) in app.webview_windows() {
+                        for (label, win) in app.windows() {
                             if label.starts_with("float-") && win.is_focused().unwrap_or(false) {
                                 let _ = float_aspect(win);
                             }

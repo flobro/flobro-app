@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Flobro</title>
+    <style>
+      /* The band is its own webview, so there is no page to defend against
+         and no shadow DOM to hide in: these styles apply to nothing else. */
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; overflow: hidden; }
+      body {
+        display: flex; align-items: center; gap: 2px; padding: 0 6px; height: 38px;
+        background: rgba(22, 30, 38, 0.98);
+        font: 12px/1 -apple-system, 'Segoe UI', system-ui, sans-serif; color: #dfe9f2;
+        user-select: none; -webkit-user-select: none;
+      }
+      .mid { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; align-self: stretch; }
+      .title {
+        flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        display: flex; align-items: center; gap: 6px; padding: 0 6px; border-radius: 7px;
+        height: 28px; color: #aebfcd; cursor: grab;
+      }
+      .title:hover { background: rgba(255, 255, 255, 0.1); }
+      .title img { width: 14px; height: 14px; border-radius: 3px; }
+      .spacer { flex: 1 1 auto; align-self: stretch; cursor: grab; min-width: 24px; }
+      .urlbox {
+        display: none; flex: 1 1 auto; min-width: 0; height: 26px; margin: 0 2px; padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 7px;
+        background: rgba(0, 0, 0, 0.35); color: #eef5fb; outline: none;
+        font: 12px -apple-system, 'Segoe UI', system-ui, sans-serif;
+        user-select: text; -webkit-user-select: text;
+      }
+      .urlbox:focus { border-color: #3fa9f5; }
+      body.editing .urlbox { display: block; }
+      body.editing .title, body.editing .spacer { display: none; }
+      button {
+        all: initial; cursor: pointer; width: 28px; height: 28px; border-radius: 7px;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: #dfe9f2; flex: 0 0 auto;
+      }
+      button:hover { background: rgba(255, 255, 255, 0.14); }
+      button.close:hover { background: #d64545; color: #fff; }
+      button.pin.off { color: #7a8a98; }
+      button svg { width: 15px; height: 15px; display: block; }
+    </style>
+  </head>
+  <body>
+    <span class="mid">
+      <span class="title" id="title"><img id="favicon" alt="" hidden /><span id="title-text"></span></span>
+      <span class="spacer" id="spacer"></span>
+      <input class="urlbox" id="urlbox" type="text" spellcheck="false" />
+    </span>
+
+    <button type="button" id="refresh">
+      <svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M13 1.8v3h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" id="zoom-out">
+      <svg viewBox="0 0 16 16"><path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" id="zoom-in">
+      <svg viewBox="0 0 16 16"><path d="M3 8h10M8 3v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" id="aspect">
+      <svg viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>
+    <button type="button" id="pin" class="pin">
+      <svg viewBox="0 0 16 16"><path d="M9.5 2.5l4 4-2.2.6-2.6 2.6.3 3.3-2-2L4 14l-1-1 3-3-2-2 3.3.3L9 5.7l-.6-2.2z" fill="currentColor" transform="translate(-.7 -.6)"/></svg>
+    </button>
+    <button type="button" id="new-window">
+      <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" id="settings">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.6l.9 1.9 2-.6 1.4 1.4-.6 2 1.9.9v2l-1.9.9.6 2-1.4 1.4-2-.6-.9 1.9h-2l-.9-1.9-2 .6-1.4-1.4.6-2-1.9-.9v-2l1.9-.9-.6-2 1.4-1.4 2 .6.9-1.9z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" transform="translate(8 8) scale(.92) translate(-7 -8.2)"/></svg>
+    </button>
+    <button type="button" id="minimize">
+      <svg viewBox="0 0 16 16"><path d="M3 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" id="close" class="close">
+      <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+
+    <script src="band.js"></script>
+  </body>
+</html>
