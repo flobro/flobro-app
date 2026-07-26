@@ -9,7 +9,9 @@ generated from [Conventional Commits](https://www.conventionalcommits.org)
 using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
 
-[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/flobro/flobro-app/compare/v1.2.2...v1.3.0
+[1.2.2]: https://github.com/flobro/flobro-app/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/flobro/flobro-app/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/flobro/flobro-app/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/flobro/flobro-app/compare/v1.0.1...v1.1.0
@@ -17,6 +19,23 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 [1.0.0]: https://github.com/flobro/flobro-app/releases/tag/v1.0.0
 
 ## Unreleased
+
+## v1.3.0 (2026-07-26)
+
+### Added
+
+- show a loading line while a page loads
+- dismiss the hover toolbar with Escape
+
+### Fixed
+
+- render the toolbar on pages that enforce Trusted Types, such as youtube.com
+- re-inject the hover toolbar when the page replaces the DOM
+- require hover intent before the toolbar covers a site header
+- close the focused window with Cmd+W and Ctrl+W
+- route target=_blank links and window.open() to a new float window
+- shield the URL editor from page-level keydown capture
+- allow open_float from float windows
 
 ## v1.2.2 (2026-07-23)
 
