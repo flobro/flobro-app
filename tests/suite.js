@@ -11,7 +11,7 @@
   'use strict';
 
   const t = window.__flobroTest;
-  const { spec, gated, assert, assertIs, q, host, invoked, mouse, key, hover, waitFor } = t;
+  const { spec, gated, assert, assertIs, q, host, invoked, mouse, key, hover, summon, waitFor } = t;
 
   /* --------------------------- every fixture --------------------------- */
 
@@ -26,32 +26,32 @@
     );
   });
 
-  spec('common', 'reveals the bar when the pointer reaches the top edge', async () => {
+  spec('common', 'reveals the bar when the pointer lingers at the top edge', async () => {
     const bar = q('.bar');
     assert(!bar.classList.contains('visible'), 'the bar started out visible');
-    hover(5);
-    assert(bar.classList.contains('visible'), 'the bar did not reveal on a top-edge mousemove');
+    await summon();
+    assert(bar.classList.contains('visible'), 'lingering at the top edge did not reveal the bar');
     const rect = bar.getBoundingClientRect();
     assertIs(Math.round(rect.width), innerWidth, 'the bar does not span the window');
     assertIs(Math.round(rect.height), 38, 'unexpected bar height');
   });
 
   spec('common', 'takes the pointer at the top edge, ahead of the page', async () => {
-    hover(5);
+    await summon();
     const hit = document.elementFromPoint(Math.round(innerWidth / 2), 12);
     assertIs(hit, host(), 'the page, not the toolbar, owns the top edge');
   });
 
   spec('common', 'drags the window when the titlebar is pressed and moved', async () => {
     const title = q('.title');
-    hover(5);
+    await summon();
     mouse(title, 'mousedown', { button: 0, clientX: 100, clientY: 12 });
     mouse(title, 'mousemove', { clientX: 140, clientY: 12 });
     assert(invoked('plugin:window|start_dragging'), 'dragging the titlebar started no window drag');
   });
 
   spec('common', 'closes and minimizes the window from the toolbar', async () => {
-    hover(5);
+    await summon();
     mouse(q('.close'), 'click', { button: 0 });
     assert(invoked('float_close'), 'the close button did not ask the app to close');
     mouse(q('.min'), 'click', { button: 0 });
@@ -62,17 +62,78 @@
     assertIs(q('.title .text').textContent, document.title, 'the toolbar title is out of sync');
   });
 
+  /* A pointer on its way to the site's own header must not summon anything:
+   * the toolbar covering that header is what #1 was about. */
+  spec('common', 'ignores a pointer passing through the top edge', async () => {
+    hover(3);
+    hover(200);
+    await t.sleep(500);
+    assert(!q('.bar').classList.contains('visible'), 'a pass-through opened the bar');
+  });
+
+  spec('common', 'leaves the top edge to the page until the bar is summoned', async () => {
+    const hit = document.elementFromPoint(Math.round(innerWidth / 2), 12);
+    assert(hit !== host(), 'the toolbar owns the top edge while it is hidden');
+  });
+
+  spec('common', 'dismisses the bar on Escape', async () => {
+    await summon();
+    assert(q('.bar').classList.contains('visible'), 'the bar did not open');
+    key(document.body, 'Escape');
+    assert(!q('.bar').classList.contains('visible'), 'Escape did not dismiss the bar');
+  });
+
+  /* Cmd+W / Ctrl+W (#5). A float window has no titlebar to close from. */
+  spec('common', 'closes the window with the close shortcut', async () => {
+    const mac = /mac/i.test(navigator.platform || navigator.userAgent || '');
+    document.body.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'w',
+        metaKey: mac,
+        ctrlKey: !mac,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    assert(invoked('float_close'), 'the close shortcut did not close the window');
+  });
+
+  spec('common', 'ignores a bare w', async () => {
+    key(document.body, 'w');
+    assert(!invoked('float_close'), 'typing w closed the window');
+  });
+
+  /* The loading line (#7). It has to clear itself and never take clicks. */
+  spec('common', 'clears the loading line once the page is done', async () => {
+    const line = q('.progress');
+    assert(line, 'no loading line in the toolbar');
+    assertIs(getComputedStyle(line).pointerEvents, 'none', 'the loading line can swallow clicks');
+    assert(
+      await waitFor(() => !line.classList.contains('active'), 3000),
+      'the line never finished',
+    );
+  });
+
+  spec('common', 'runs the loading line again on a navigation', async () => {
+    const line = q('.progress');
+    window.dispatchEvent(new Event('beforeunload'));
+    assert(line.classList.contains('active'), 'leaving the page showed no progress');
+    assert(parseFloat(line.style.width) > 0, 'the line has no width');
+    window.dispatchEvent(new Event('load'));
+    assertIs(line.style.width, '100%', 'arriving did not complete the line');
+  });
+
   /* ------------------------------ baseline ----------------------------- */
 
   spec('baseline', 'hides the bar again once the pointer leaves', async () => {
-    hover(5);
+    await summon();
     hover(400);
     const hidden = await waitFor(() => !q('.bar').classList.contains('visible'), 3000);
     assert(hidden, 'the bar stayed visible after the pointer left');
   });
 
   spec('baseline', 'drives zoom, aspect, new window and settings from the menu', async () => {
-    hover(5);
+    await summon();
     mouse(q('.mn'), 'click', { button: 0 });
     assert(q('.menu').classList.contains('open'), 'the menu did not open');
 
@@ -127,7 +188,7 @@
     await waitFor(() => !!host());
     window.wipeDocument();
     assert(await waitFor(() => !!host()), 'the toolbar did not survive a second replacement');
-    hover(5);
+    await summon();
     mouse(q('.close'), 'click', { button: 0 });
     assert(invoked('float_close'), 'the re-attached toolbar has dead buttons');
   });
@@ -141,7 +202,7 @@
   });
 
   spec('hotkeys', 'double-clicking the titlebar opens the URL editor', async () => {
-    hover(5);
+    await summon();
     mouse(q('.title'), 'dblclick', { button: 0 });
     assert(q('.bar').classList.contains('editing'), 'the URL editor did not open');
     assertIs(t.root().activeElement, q('.urlbox'), 'the URL editor did not take focus');
@@ -149,7 +210,7 @@
   });
 
   spec('hotkeys', 'page hotkeys do not see keys while the URL editor is open', async () => {
-    hover(5);
+    await summon();
     mouse(q('.title'), 'dblclick', { button: 0 });
     const before = window.pageKeysSeen();
     key(q('.urlbox'), 'k');
@@ -161,7 +222,7 @@
   });
 
   spec('hotkeys', 'Escape closes the URL editor', async () => {
-    hover(5);
+    await summon();
     mouse(q('.title'), 'dblclick', { button: 0 });
     key(q('.urlbox'), 'Escape');
     assert(!q('.bar').classList.contains('editing'), 'Escape did not close the URL editor');
@@ -169,7 +230,7 @@
 
   spec('hotkeys', 'the URL editor refuses schemes other than http(s)', async () => {
     const before = location.href;
-    hover(5);
+    await summon();
     mouse(q('.title'), 'dblclick', { button: 0 });
     q('.urlbox').value = 'javascript:void 0';
     key(q('.urlbox'), 'Enter');
@@ -232,7 +293,7 @@
   spec('live', 'injects the toolbar and takes the top edge', async () => {
     const el = host();
     assert(el && el.isConnected, 'no toolbar on this site');
-    hover(5);
+    await summon();
     assert(q('.bar').classList.contains('visible'), 'the bar did not reveal');
     assertIs(
       document.elementFromPoint(Math.round(innerWidth / 2), 12),
@@ -242,7 +303,7 @@
   });
 
   spec('live', 'wires the window controls', async () => {
-    hover(5);
+    await summon();
     mouse(q('.close'), 'click', { button: 0 });
     assert(invoked('float_close'), 'the close button is dead on this site');
   });

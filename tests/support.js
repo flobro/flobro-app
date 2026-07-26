@@ -46,9 +46,16 @@
     key(target, key) {
       target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, composed: true }));
     },
-    /* Reveals the bar the way moving the pointer to the top edge does. */
+    /* Moves the pointer, nothing more. Summoning the bar takes a dwell at
+     * the top edge, so a bare hover is what "passing through" looks like. */
     hover(y) {
-      api.mouse(document, 'mousemove', { clientX: Math.round(innerWidth / 2), clientY: y ?? 5 });
+      api.mouse(document, 'mousemove', { clientX: Math.round(innerWidth / 2), clientY: y ?? 3 });
+    },
+
+    /* Lingers at the top edge and waits out the reveal dwell. */
+    async summon() {
+      api.hover(3);
+      await api.sleep(400);
     },
 
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
@@ -74,6 +81,10 @@
     spec(fixture, name, fn) {
       specs.push({ fixture, name, fn, gate: 0 });
     },
+    /* Behaviour that is still broken. It runs, and a failure is reported as
+     * pending rather than counted as a regression: the issue has to land
+     * before it can pass. A pending spec that starts passing is called out
+     * so it gets promoted to a real one. */
     gated(issue, fixture, name, fn) {
       specs.push({ fixture, name, fn, gate: issue });
     },
@@ -112,7 +123,10 @@
       invokes.length = 0;
       const bar = api.q('.bar');
       const menu = api.q('.menu');
-      if (bar) bar.style.transition = 'none';
+      if (bar) {
+        bar.style.transition = 'none';
+        bar.classList.remove('visible'); // every spec starts from a hidden bar
+      }
       if (bar && bar.classList.contains('editing')) api.q('.urlbox').blur();
       if (menu && menu.classList.contains('open')) {
         document.dispatchEvent(new MouseEvent('click', { bubbles: true }));

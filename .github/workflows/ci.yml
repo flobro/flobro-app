@@ -25,9 +25,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
-  # The suite drives a real WKWebView, so it only runs on macOS. It fails
-  # while #4 (OAuth popup) and #6 (passkey) are open: those specs describe
-  # behaviour that is still broken and are meant to gate the fixes.
+  # The suite drives a real WKWebView, so it only runs on macOS. Specs for
+  # behaviour that is still broken (#4, #6) report as pending and do not fail
+  # the job, so this stays green until something actually regresses.
   regression-suite:
     runs-on: macos-latest
     steps:

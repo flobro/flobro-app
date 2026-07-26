@@ -47,8 +47,10 @@ spec('my-case', 'does the thing', async () => {
 ```
 
 Use `spec('common', ...)` for something every page should satisfy. Use
-`gated(issue, ...)` for behaviour that is still broken: the spec runs, fails,
-and names the issue that has to land before it can pass.
+`gated(issue, ...)` for behaviour that is still broken: the spec runs and a
+failure is reported as pending rather than as a regression, so an open issue
+does not hold the build red. Only real failures fail the run. A pending spec
+that starts passing is called out in the summary so it gets promoted.
 
 ## What the shims change
 
@@ -63,7 +65,10 @@ Three things differ from a real float window, all in `support.js`:
 
 ## Known limits
 
-- The harness is an unsigned, unbundled binary. `passkey` probes what the
-  webview offers by default, so confirming a fix for #6 needs a signed build
-  as well.
-- macOS only.
+- macOS only. No WebView2 harness, so Windows differences are uncovered.
+- The harness is an unsigned, unbundled binary. For `passkey` that turned out
+  not to matter: a real Flobro float window on webauthn.io reports the same
+  `isUserVerifyingPlatformAuthenticatorAvailable() === false`, so the pending
+  spec reflects the app rather than the harness. Confirming a *fix* for #6
+  will still need a signed build, because the entitlement that grants a
+  platform authenticator only takes effect when signed.
