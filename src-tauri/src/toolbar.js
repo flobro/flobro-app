@@ -31,6 +31,7 @@
       minimize: 'Minimize',
       settings: 'Settings',
       close: 'Close',
+      loading: 'Loading',
       drag: 'Drag to move, double-click to edit the URL',
       dragOnly: 'Drag to move',
     },
@@ -47,6 +48,7 @@
       minimize: 'Minimaliseren',
       settings: 'Instellingen',
       close: 'Sluiten',
+      loading: 'Laden',
       drag: 'Sleep om te verplaatsen, dubbelklik om de URL te wijzigen',
       dragOnly: 'Sleep om te verplaatsen',
     },
@@ -307,7 +309,14 @@
     '.zrow{display:flex;align-items:center;gap:2px;height:32px;padding:0 4px}' +
     '.zrow .zlbl{flex:1 1 auto;text-align:center;color:#aebfcd;font-size:12px;' +
     'font-variant-numeric:tabular-nums}' +
-    '.msep{border:0;border-top:1px solid rgba(255,255,255,.12);margin:6px 4px}';
+    '.msep{border:0;border-top:1px solid rgba(255,255,255,.12);margin:6px 4px}' +
+    /* Loading line: sits at the very top edge, above the bar, and shows
+     * whether or not the bar is revealed. */
+    '.progress{position:fixed;top:0;left:0;height:2px;width:0;pointer-events:none;' +
+    'background:#3fa9f5;box-shadow:0 0 8px rgba(63,169,245,.7);opacity:0;' +
+    'transition:width .2s ease-out,opacity .3s ease-out}' +
+    '.progress.active{opacity:1}' +
+    '.progress.done{opacity:0}';
 
   function build() {
     if (!document.documentElement) return;
@@ -353,8 +362,11 @@
       menuItem('cfg', L.settings, 'settings'),
     ]);
 
+    var progress = h('div', { class: 'progress', role: 'progressbar', 'aria-label': L.loading });
+
     shadow.appendChild(bar);
     shadow.appendChild(menu);
+    shadow.appendChild(progress);
 
     var $ = function (sel) {
       return shadow.querySelector(sel);
@@ -386,6 +398,56 @@
         characterData: true,
       });
     }
+
+    /* loading progress
+     *
+     * There is no byte count to report from in here, so the line eases
+     * towards 90% and only snaps to 100% when the page is done, the way
+     * browsers have always faked it. It runs on the page's own load events
+     * rather than through Tauri, which keeps it working on every window
+     * without another IPC command or capability.
+     *
+     * beforeunload covers the gap a navigation leaves: after a click the old
+     * page stays on screen until the next document commits, and without this
+     * that wait would show nothing at all. */
+    var PROGRESS_CAP = 20000; // ms before a line that never finishes gives up
+    var progressTimer = null;
+    var progressCap = null;
+    var progressWidth = 0;
+
+    function startProgress() {
+      if (progressTimer) return;
+      progressWidth = 6;
+      progress.classList.remove('done');
+      progress.classList.add('active');
+      progress.style.width = progressWidth + '%';
+      progressTimer = setInterval(function () {
+        progressWidth += Math.max(0.4, (90 - progressWidth) / 10);
+        progress.style.width = Math.min(progressWidth, 90) + '%';
+      }, 180);
+      /* A navigation the page never commits - a download link, a blocked
+       * scheme, a cancelled click - leaves this document in place with no
+       * load event coming. Give up rather than sit at 90% forever. */
+      clearTimeout(progressCap);
+      progressCap = setTimeout(finishProgress, PROGRESS_CAP);
+    }
+
+    function finishProgress() {
+      if (!progressTimer) return;
+      clearInterval(progressTimer);
+      clearTimeout(progressCap);
+      progressTimer = null;
+      progress.style.width = '100%';
+      progress.classList.add('done');
+      setTimeout(function () {
+        progress.classList.remove('active', 'done');
+        progress.style.width = '0';
+      }, 400);
+    }
+
+    if (document.readyState !== 'complete') startProgress();
+    window.addEventListener('load', finishProgress);
+    window.addEventListener('beforeunload', startProgress);
 
     /* show / hide */
     function show() {
