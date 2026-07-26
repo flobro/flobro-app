@@ -11,7 +11,15 @@
   window.__FLOBRO_TOOLBAR__ = true;
 
   var HIDE_DELAY = 1200; // ms after the mouse leaves before fading out
-  var HOT_ZONE = 46; // px from the top edge that reveals the toolbar
+  /* Summoning takes intent (see #1). The old 46px zone was taller than the
+   * bar itself, so merely heading for a site's own header - twitch.tv was
+   * the report - covered the thing you were reaching for. Now the pointer
+   * has to reach the top few px and stay there; passing through on the way
+   * somewhere else arms nothing. Once open, the bar keeps the roomier zone
+   * so it does not flicker away under the pointer. */
+  var HOT_ZONE = 6; // px from the top edge that arms the reveal
+  var DWELL = 300; // ms the pointer has to linger there before it shows
+  var KEEP_ZONE = 46; // px within which an open bar stays open
   var DRAG_THRESHOLD = 4; // px of movement before a titlebar press becomes a drag
   var zoom = 1;
   var pinned = true;
@@ -104,6 +112,7 @@
    * capturing listener here, before build(), guarantees it runs first. */
   var urlEditing = false;
   var urlEditRefs = null; // { close, commit } - populated by build()
+  var dismissToolbar = null; // returns true if it closed something - build()
 
   /* Cmd+W on macOS, Ctrl+W elsewhere: the platform's key convention, not
    * its layout. A float window has no titlebar to close from, and Windows
@@ -129,10 +138,20 @@
         invoke('float_close');
         return;
       }
-      if (!urlEditing || !urlEditRefs) return;
-      e.stopImmediatePropagation();
-      if (e.key === 'Escape') return urlEditRefs.close();
-      if (e.key === 'Enter') return urlEditRefs.commit();
+      if (urlEditing && urlEditRefs) {
+        e.stopImmediatePropagation();
+        if (e.key === 'Escape') return urlEditRefs.close();
+        if (e.key === 'Enter') return urlEditRefs.commit();
+        return;
+      }
+      /* Escape backs out of the toolbar. It rides this capturing listener
+       * rather than one added in build(), because pages that claim every
+       * keystroke (twitch.tv again) would swallow a later listener before
+       * it ever ran. Only swallow the key when it actually closed
+       * something, so the page keeps its own Escape otherwise. */
+      if (e.key === 'Escape' && dismissToolbar && dismissToolbar()) {
+        e.stopImmediatePropagation();
+      }
     },
     true,
   );
@@ -450,9 +469,20 @@
     window.addEventListener('beforeunload', startProgress);
 
     /* show / hide */
+    var dwellTimer = null;
+    function cancelDwell() {
+      clearTimeout(dwellTimer);
+      dwellTimer = null;
+    }
     function show() {
+      cancelDwell();
       clearTimeout(hideTimer);
       bar.classList.add('visible');
+    }
+    function hideNow() {
+      if (bar.classList.contains('editing') || menu.classList.contains('open')) return;
+      clearTimeout(hideTimer);
+      bar.classList.remove('visible');
     }
     function scheduleHide() {
       /* never hide mid-edit or with the menu open */
@@ -465,8 +495,17 @@
     document.addEventListener(
       'mousemove',
       function (e) {
-        if (e.clientY <= HOT_ZONE) show();
-        else if (bar.classList.contains('visible')) scheduleHide();
+        if (bar.classList.contains('visible')) {
+          if (e.clientY > KEEP_ZONE) scheduleHide();
+          return;
+        }
+        /* Not open yet: arm on the top edge, disarm the moment the pointer
+         * moves off it, so only lingering there actually summons the bar. */
+        if (e.clientY <= HOT_ZONE) {
+          if (!dwellTimer) dwellTimer = setTimeout(show, DWELL);
+        } else {
+          cancelDwell();
+        }
       },
       { passive: true },
     );
@@ -500,9 +539,20 @@
     menu.addEventListener('click', function (e) {
       e.stopPropagation();
     });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && menu.classList.contains('open')) closeMenu();
-    });
+    /* Escape backs out one step: the menu first, then the bar itself, so a
+     * bar sitting over something you want to click goes away without
+     * waiting out the hide delay. */
+    dismissToolbar = function () {
+      if (menu.classList.contains('open')) {
+        closeMenu();
+        return true;
+      }
+      if (bar.classList.contains('visible')) {
+        hideNow();
+        return true;
+      }
+      return false;
+    };
 
     /* URL editing: double-click the title, Enter navigates, Esc cancels.
      * Escape/Enter handling lives in the capturing keydown listener
