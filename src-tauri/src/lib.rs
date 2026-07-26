@@ -392,8 +392,9 @@ fn float_minimize(window: WebviewWindow) -> Result<(), String> {
     window.minimize().map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-fn float_close(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+/// Closes a window, bringing the launcher back if it was the last float.
+/// Shared by the toolbar's close button and the Close Window menu item.
+fn close_window(app: &AppHandle, window: &WebviewWindow) -> Result<(), String> {
     let label = window.label().to_string();
     window.close().map_err(|e| e.to_string())?;
     // If that was the last float window, bring the launcher back
@@ -402,13 +403,18 @@ fn float_close(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
         .keys()
         .filter(|k| k.starts_with("float-") && **k != label)
         .count();
-    if floats_left == 0 {
+    if label.starts_with("float-") && floats_left == 0 {
         if let Some(launcher) = app.get_webview_window("launcher") {
             let _ = launcher.show();
             let _ = launcher.set_focus();
         }
     }
     Ok(())
+}
+
+#[tauri::command]
+fn float_close(app: AppHandle, window: WebviewWindow) -> Result<(), String> {
+    close_window(&app, &window)
 }
 
 #[tauri::command]
@@ -552,10 +558,15 @@ fn build_menu(app: &tauri::App, lang: &str) -> tauri::Result<tauri::menu::Menu<t
                 .build(app)?,
         )
         .separator()
-        .item(&PredefinedMenuItem::close_window(
-            app,
-            Some(t("Close Window", "Sluit venster")),
-        )?)
+        /* Deliberately not PredefinedMenuItem::close_window: that sends
+         * performClose:, which AppKit ignores (with a beep) on a window
+         * without a close button, and every Flobro window is
+         * decorations(false). The custom item closes it for real. */
+        .item(
+            &MenuItemBuilder::with_id("close-window", t("Close Window", "Sluit venster"))
+                .accelerator("Cmd+W")
+                .build(app)?,
+        )
         .build()?;
 
     let edit_menu = SubmenuBuilder::new(app, t("Edit", "Wijzig"))
@@ -698,6 +709,16 @@ pub fn run() {
                         tauri::async_runtime::spawn(async move {
                             let _ = float_new(handle).await;
                         });
+                    }
+                    "close-window" => {
+                        // Whatever has focus: a float, the launcher or settings.
+                        if let Some(win) = app
+                            .webview_windows()
+                            .values()
+                            .find(|win| win.is_focused().unwrap_or(false))
+                        {
+                            let _ = close_window(app, win);
+                        }
                     }
                     "check-updates" => {
                         tauri::async_runtime::spawn(manual_update_check(app.clone()));
