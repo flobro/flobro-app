@@ -9,6 +9,9 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
+# Local Claude Code settings: per-machine paths, nothing shareable
+.claude/settings.local.json
+
 # Environments and secrets
 .env
 .env.*
