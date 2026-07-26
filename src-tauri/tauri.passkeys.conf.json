@@ -1,0 +1,8 @@
+{
+  "$schema": "gen/schemas/desktop-schema.json",
+  "bundle": {
+    "macOS": {
+      "entitlements": "Entitlements.plist"
+    }
+  }
+}

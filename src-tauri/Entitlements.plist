@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Lets the pages Flobro floats use passkeys (#6).
+
+	  WKWebView only offers a platform authenticator (Touch ID) to an app
+	  holding this entitlement. Without it the API is present but
+	  isUserVerifyingPlatformAuthenticatorAvailable() resolves false, which
+	  is exactly what a float window reports today, so no passkey prompt can
+	  ever appear.
+
+	  This is a managed entitlement: Apple has to grant it to the team before
+	  it can be signed with, and every shipping third-party browser carries
+	  it. A build signed with an ungranted copy of it does not launch at all,
+	  so it is deliberately NOT wired into tauri.conf.json. See docs/passkeys.md.
+	-->
+	<key>com.apple.developer.web-browser.public-key-credential</key>
+	<true/>
+</dict>
+</plist>

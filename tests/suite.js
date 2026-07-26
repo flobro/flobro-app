@@ -281,6 +281,10 @@
     assert(navigator.credentials && navigator.credentials.get, 'no navigator.credentials.get');
   });
 
+  /* Confirmed against a real float window on webauthn.io, not just here:
+   * the API is present and no authenticator is offered. WKWebView gates
+   * platform authenticators behind a managed Apple entitlement, so this can
+   * only start passing on a signed build. See docs/passkeys.md. */
   gated(6, 'passkey', 'a platform authenticator is available for passkey sign-in', async () => {
     const available =
       await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
