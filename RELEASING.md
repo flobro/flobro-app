@@ -22,7 +22,13 @@ Locally: `pip install commitizen` and a `node_modules` installed on the platform
                     # updates CHANGELOG.md and creates the vX.Y.Z tag
    ```
 
-   Check `CHANGELOG.md` afterwards: cz does not follow the Keep a Changelog layout, so tidy the new section by hand. Also keep `Cargo.lock`'s `flobro` entry in sync (a local `cargo tauri dev` or `cargo update -p flobro` does it).
+   Since v1.3.0, `.cz.toml` and `.cz-changelog.md.j2` generate the Keep a Changelog section names (Added, Changed, Fixed), in the spec's order, without commit scopes. Three things are still yours to do in `CHANGELOG.md` afterwards:
+
+   - Add the compare links for the new version. cz never touches the link block at the top, so `[Unreleased]` keeps pointing at the previous release until you move it, and the new `[X.Y.Z]:` line has to be added.
+   - Re-add the empty `## Unreleased` heading. cz treats it as the insertion point and consumes it.
+   - Reword entries for readers, and drop what says nothing to them. Commit subjects are written for the repo, so name the site or the symptom where it helps, and delete pure-housekeeping entries.
+
+   Also keep `Cargo.lock`'s `flobro` entry in sync (a local `cargo tauri dev` or `cargo update -p flobro` does it); `version_files` does not cover it.
 3. Push: `git push && git push --tags`. CI builds a signed, notarized macOS universal build and a Windows installer into a **draft** release (10 to 20 minutes).
 4. Verify the draft on the releases page. It must contain six uploaded assets:
 

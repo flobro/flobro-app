@@ -11,5 +11,24 @@ version_files = [
   "src-tauri/Cargo.toml:^version"
 ]
 
-[tool.commitizen.customize]
-change_type_map = {"feat" = "Added", "fix" = "Fixed", "docs" = "Documentation"}
+# Keep a Changelog 1.1.0 section names (https://keepachangelog.com/en/1.1.0/).
+# This key must live at the top level: `cz changelog` reads
+# settings["change_type_map"], while anything under [tool.commitizen.customize]
+# is only read by name = "cz_customize". Placed there it is silently ignored,
+# which is why every release before v1.3.0 emitted Feat/Fix/Refactor headings
+# and needed fixing by hand.
+#
+# Only feat, fix, refactor, perf and BREAKING CHANGE ever reach the changelog:
+# the conventional-commits parser drops every other type, so docs, chore, ci,
+# test, style and build commits need no mapping.
+change_type_map = { "feat" = "Added", "fix" = "Fixed", "refactor" = "Changed", "perf" = "Changed", "BREAKING CHANGE" = "Changed" }
+
+# Keep a Changelog orders its sections Added, Changed, Deprecated, Removed,
+# Fixed, Security. Deprecated, Removed and Security have no Conventional Commit
+# type behind them, so they only appear when a section is written by hand;
+# listing them keeps that section in the right place when it is.
+change_type_order = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
+
+# Local template, resolved from the repository root. It only differs from
+# commitizen's bundled one by leaving the commit scope out of each bullet.
+template = ".cz-changelog.md.j2"

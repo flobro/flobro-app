@@ -1,0 +1,27 @@
+{# Changelog template for `cz bump` / `cz changelog`.
+
+   Same as commitizen's bundled CHANGELOG.md.j2, with one change: the commit
+   scope is not printed. Upstream renders "- **toolbar**: message", which reads
+   as internal bookkeeping in a Keep a Changelog file aimed at users, and every
+   release before v1.3.0 had those prefixes stripped by hand.
+
+   Section names and their order come from change_type_map and
+   change_type_order in .cz.toml.
+#}
+{% for entry in tree %}
+
+## {{ entry.version }}{% if entry.date %} ({{ entry.date }}){% endif %}
+
+{% for change_key, changes in entry.changes.items() %}
+
+{% if change_key %}
+### {{ change_key }}
+{% endif %}
+
+{% for change in changes %}
+{% if change.message %}
+- {{ change.message }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endfor %}
