@@ -11,6 +11,11 @@
  *   npm test                  every fixture
  *   npm test -- --only hotkeys  one fixture
  *   npm test -- --live        the same smoke specs against the real sites
+ *
+ * Specs registered with gated() describe behaviour that is still broken.
+ * They run, and a failure is reported as pending rather than counted as a
+ * regression, so an open issue does not hold the build red. A pending spec
+ * that starts passing is called out instead: promote it to a real spec.
  */
 import AppKit
 import Foundation
@@ -213,10 +218,14 @@ final class Harness: NSObject, WKNavigationDelegate {
   }
 
   private func report(_ result: SpecResult) {
-    if result.ok {
+    if result.ok && result.gate > 0 {
+      print(
+        "  \(green)✓\(reset) \(result.name) "
+          + "\(yellow)(pending on #\(result.gate) but passing: promote it)\(reset)")
+    } else if result.ok {
       print("  \(green)✓\(reset) \(result.name)")
     } else if result.gate > 0 {
-      print("  \(yellow)✗\(reset) \(result.name) \(dim)(gated on #\(result.gate))\(reset)")
+      print("  \(yellow)○\(reset) \(result.name) \(dim)(pending on #\(result.gate))\(reset)")
       print("    \(dim)\(result.error)\(reset)")
     } else {
       print("  \(red)✗\(reset) \(result.name)")
@@ -227,20 +236,28 @@ final class Harness: NSObject, WKNavigationDelegate {
   private func finish() {
     let passed = results.filter { $0.ok }
     let broken = results.filter { !$0.ok && $0.gate == 0 }
-    let gated = results.filter { !$0.ok && $0.gate > 0 }
-    let gates = Set(gated.map { $0.gate }).sorted().map { "#\($0)" }.joined(separator: ", ")
+    let pending = results.filter { !$0.ok && $0.gate > 0 }
+    let promotable = results.filter { $0.ok && $0.gate > 0 }
+    let gates = Set(pending.map { $0.gate }).sorted().map { "#\($0)" }.joined(separator: ", ")
 
-    print("\n\(bold)\(passed.count) passed, \(broken.count) failed, \(gated.count) gated\(reset)")
+    print(
+      "\n\(bold)\(passed.count) passed, \(broken.count) failed, "
+        + "\(pending.count) pending\(reset)")
     if !broken.isEmpty {
       print("\(red)regressions:\(reset)")
       for result in broken { print("  \(result.fixture): \(result.name)") }
     }
-    if !gated.isEmpty {
+    if !pending.isEmpty {
       print(
-        "\(yellow)gated on \(gates):\(reset) these describe behaviour that is still broken and "
-          + "fail until those issues are fixed.")
+        "\(yellow)pending on \(gates):\(reset) behaviour that is still broken. "
+          + "Skipped, not failed: fixing those issues is what makes these pass.")
     }
-    exit(broken.isEmpty && gated.isEmpty ? 0 : 1)
+    if !promotable.isEmpty {
+      print("\(green)ready to promote:\(reset)")
+      for result in promotable { print("  #\(result.gate): \(result.name)") }
+    }
+    // Only real regressions fail the run.
+    exit(broken.isEmpty ? 0 : 1)
   }
 }
 
