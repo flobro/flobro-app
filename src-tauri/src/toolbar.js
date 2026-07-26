@@ -103,9 +103,30 @@
   var urlEditing = false;
   var urlEditRefs = null; // { close, commit } - populated by build()
 
+  /* Cmd+W on macOS, Ctrl+W elsewhere: the platform's key convention, not
+   * its layout. A float window has no titlebar to close from, and Windows
+   * has no menu bar to hang an accelerator on, so the shortcut lives here.
+   * On macOS the menu item usually claims the key before the page sees it;
+   * this stays as the path for every other platform. */
+  var closeModifier = /mac/i.test(navigator.platform || navigator.userAgent || '')
+    ? 'metaKey'
+    : 'ctrlKey';
+
+  function isCloseShortcut(e) {
+    return e[closeModifier] && !e.altKey && !e.shiftKey && (e.key === 'w' || e.key === 'W');
+  }
+
   document.addEventListener(
     'keydown',
     function (e) {
+      /* Ahead of the URL-editor shield below: the window has to be
+       * closable even while the address bar is open. */
+      if (isCloseShortcut(e)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        invoke('float_close');
+        return;
+      }
       if (!urlEditing || !urlEditRefs) return;
       e.stopImmediatePropagation();
       if (e.key === 'Escape') return urlEditRefs.close();
