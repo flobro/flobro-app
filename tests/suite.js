@@ -183,10 +183,8 @@
     assert(back, 'the toolbar never came back after the document was replaced');
   });
 
-  /* The title watcher binds to document.head. A dev server reloading in
-   * place installs a brand new head, so a watcher bound to the old one is
-   * left observing a detached node and the toolbar title freezes on whatever
-   * the page was called before the reload (#18). */
+  /* A replaced document installs a new head, leaving the title watcher on a
+   * detached node (#18). */
   spec('dom-wipe', 'keeps the title in sync after the page replaces the document', async () => {
     window.wipeDocument();
     assert(await waitFor(() => !!host()), 'the toolbar never came back');

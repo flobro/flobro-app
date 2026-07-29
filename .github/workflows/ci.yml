@@ -35,10 +35,8 @@ jobs:
       - run: swift --version
       - run: npm test
 
-  # The capability patterns decide whether the toolbar's IPC is allowed at all
-  # (#18): get them wrong and every button is denied on the affected origins,
-  # with nothing in the JS suite able to see it. macOS because Tauri needs no
-  # extra system libraries there.
+  # The capability patterns decide whether toolbar IPC is allowed at all (#18),
+  # which the JS suite cannot see. macOS needs no extra system libraries.
   capabilities:
     runs-on: macos-latest
     steps:
