@@ -406,17 +406,32 @@
       };
       img.src = href;
     }
-    refreshTitle();
     /* Watch the head only. Both the title and the favicon live there, while
      * a subtree observer on documentElement wakes up for every DOM change
-     * the page makes - on YouTube that is thousands per minute. */
-    if (document.head) {
-      new MutationObserver(refreshTitle).observe(document.head, {
+     * the page makes - on YouTube that is thousands per minute.
+     *
+     * The head is watched by identity, not once and for all: a page that
+     * replaces the document (a dev server reloading in place, see #18)
+     * installs a brand new head, and an observer still pointed at the old
+     * one keeps reporting a title that no longer exists. Rebinding is
+     * driven from the re-attach observer below. */
+    var headObserver = null;
+    var watchedHead = null;
+    function watchHead() {
+      if (watchedHead === document.head) return;
+      if (headObserver) headObserver.disconnect();
+      watchedHead = document.head;
+      if (!watchedHead) return;
+      headObserver = new MutationObserver(refreshTitle);
+      headObserver.observe(watchedHead, {
         childList: true,
         subtree: true,
         characterData: true,
       });
+      refreshTitle();
     }
+    refreshTitle();
+    watchHead();
 
     /* loading progress
      *
@@ -679,6 +694,10 @@
       if (!host.isConnected && document.documentElement) {
         document.documentElement.appendChild(host);
       }
+      /* Same replacement that detaches the host also swaps the head, and a
+       * page may swap only the head without touching the host at all, so
+       * this runs either way. */
+      watchHead();
     }).observe(document.documentElement, { childList: true });
   }
 
