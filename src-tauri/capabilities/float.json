@@ -1,9 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "float",
-  "description": "Minimal IPC surface for floating browser windows loading remote pages. Only the injected Flobro toolbar uses this: window dragging plus the app's own float_* commands.",
+  "description": "Minimal IPC surface for floating browser windows loading remote pages. Only the injected Flobro toolbar uses this: window dragging plus the app's own float_* commands. The port needs a wildcard of its own: Tauri matches the page's whole URL against these patterns, and a pattern that omits the port matches only the scheme's default port, so 'https://**' silently excluded every dev server on localhost:5173 and every site on a custom port (#18). The schemes stay explicit because '*://*:*' would open this surface to any scheme at all.",
   "remote": {
-    "urls": ["https://**", "http://**"]
+    "urls": ["https://*:*", "http://*:*"]
   },
   "windows": ["float-*"],
   "permissions": [
