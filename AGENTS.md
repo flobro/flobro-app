@@ -21,6 +21,9 @@ Install Rust via https://rustup.rs plus the Tauri prerequisites for your OS (htt
 - Tests: `npm test` runs the toolbar regression suite in a real WKWebView
   (macOS only, see tests/README.md); plus cargo check inside src-tauri/ and
   `npm run lint` for the frontend
+- Capability tests: `cargo test --manifest-path src-tauri/Cargo.toml` covers the
+  float capability's URL patterns, which decide whether toolbar IPC is allowed
+  on a given page. `npm test` cannot see that layer (see tests/README.md)
 
 ## Code style
 
