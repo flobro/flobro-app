@@ -406,15 +406,10 @@
       };
       img.src = href;
     }
-    /* Watch the head only. Both the title and the favicon live there, while
-     * a subtree observer on documentElement wakes up for every DOM change
-     * the page makes - on YouTube that is thousands per minute.
-     *
-     * The head is watched by identity, not once and for all: a page that
-     * replaces the document (a dev server reloading in place, see #18)
-     * installs a brand new head, and an observer still pointed at the old
-     * one keeps reporting a title that no longer exists. Rebinding is
-     * driven from the re-attach observer below. */
+    /* Watch the head only: the title and favicon live there, while a subtree
+     * observer on documentElement wakes for every DOM change the page makes.
+     * Watched by identity, since a page that replaces the document installs a
+     * new head and leaves the old observer stale (#18). */
     var headObserver = null;
     var watchedHead = null;
     function watchHead() {
@@ -694,10 +689,7 @@
       if (!host.isConnected && document.documentElement) {
         document.documentElement.appendChild(host);
       }
-      /* Same replacement that detaches the host also swaps the head, and a
-       * page may swap only the head without touching the host at all, so
-       * this runs either way. */
-      watchHead();
+      watchHead(); // the head may be swapped without the host detaching
     }).observe(document.documentElement, { childList: true });
   }
 
