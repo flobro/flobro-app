@@ -22,8 +22,7 @@ Install Rust via https://rustup.rs plus the Tauri prerequisites for your OS (htt
   (macOS only, see tests/README.md); plus cargo check inside src-tauri/ and
   `npm run lint` for the frontend
 - Capability tests: `cargo test --manifest-path src-tauri/Cargo.toml` covers the
-  float capability's URL patterns, which decide whether toolbar IPC is allowed
-  on a given page. `npm test` cannot see that layer (see tests/README.md)
+  float capability's URL patterns, which `npm test` cannot see
 
 ## Code style
 
