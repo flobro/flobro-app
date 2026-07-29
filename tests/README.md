@@ -25,6 +25,18 @@ it. Use it to confirm a fixture still reflects reality.
 Requires macOS with Swift (Xcode command line tools). There is no Windows
 harness yet, so WebView2 differences are not covered.
 
+## What this suite cannot see
+
+Whether the app lets the toolbar's IPC through at all. That is decided by the
+`remote.urls` patterns in `src-tauri/capabilities/float.json`, on the Rust
+side, and the harness stubs Tauri IPC rather than going through it. A wrong
+pattern leaves every spec here green while every button in a real float window
+is denied, which is exactly what #18 was. Those patterns have their own test:
+
+```sh
+cargo test --manifest-path src-tauri/Cargo.toml --test capabilities
+```
+
 ## Layout
 
 | file | what it is |

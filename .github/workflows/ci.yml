@@ -34,3 +34,22 @@ jobs:
       - uses: actions/checkout@v4
       - run: swift --version
       - run: npm test
+
+  # The capability patterns decide whether the toolbar's IPC is allowed at all
+  # (#18): get them wrong and every button is denied on the affected origins,
+  # with nothing in the JS suite able to see it. macOS because Tauri needs no
+  # extra system libraries there.
+  capabilities:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - run: cargo test --manifest-path src-tauri/Cargo.toml --test capabilities
