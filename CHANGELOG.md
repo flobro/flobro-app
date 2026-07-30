@@ -9,7 +9,8 @@ generated from [Conventional Commits](https://www.conventionalcommits.org)
 using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 
 
-[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/flobro/flobro-app/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/flobro/flobro-app/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/flobro/flobro-app/compare/v1.2.2...v1.3.0
 [1.2.2]: https://github.com/flobro/flobro-app/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/flobro/flobro-app/compare/v1.2.0...v1.2.1
@@ -19,6 +20,13 @@ using [commitizen](https://commitizen-tools.github.io/commitizen/) (`cz bump`).
 [1.0.0]: https://github.com/flobro/flobro-app/releases/tag/v1.0.0
 
 ## Unreleased
+
+## v1.3.1 (2026-07-30)
+
+### Fixed
+
+- keep the title in sync when a page replaces the document
+- allow toolbar on pages served from a port
 
 ## v1.3.0 (2026-07-26)
 
